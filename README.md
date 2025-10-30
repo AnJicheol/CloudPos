@@ -46,6 +46,15 @@ com.yourapp.pos
 
 <br><br>
 
+## 🧱 프로퍼티 
+
+src/main/resources/
+  application.yml            # 공통
+  application-dev.yml        # 로컬/개발
+  application-prod.yml       # 운영
+  application-test.yml       # 테스트 
+
+
 ## 📏 네이밍 규칙
 
 | 대상 | 적용 범위 | 규칙 |
@@ -93,8 +102,25 @@ ex) feat/#123-add-cart-item-api
 
 <br><br>
 
-## 📦 API 응답 포맷
 
+## 🛠 개발 규칙 (CloudPosProject)
+
+1. 단위 테스트 필수
+2. 문서화(Javadoc) 필수
+  * 공개 메서드(public)와 도메인 엔티티에는 Javadoc 작성
+  * 비즈니스 규칙이 있는 메서드는 동작/파라미터/예외 명시
+3. API 명세는 Swagger로 관리
+  * 컨트롤러 추가 시 Swagger에서 확인 가능한 상태로 PR
+4. 환경 설정 분리
+  * 레포에는 공용 application.yml 수정시 리뷰 필수
+  * 개인 개발용은 application-{name}.yml 또는 .env 만들어서 사용 (커밋 금지)
+5. YML에 민감정보 직접 기입 금지 (AWS로 별도 관리)
+6. env 파일 커밋 금지
+
+
+
+
+## 📦 API 응답 포맷
 
 ✅ 성공 응답:
 ```json
