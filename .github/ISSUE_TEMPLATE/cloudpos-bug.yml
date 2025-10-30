@@ -32,8 +32,4 @@ body:
       placeholder: 예) dev 서버 / Chrome 129 / 2025-10-30
   - type: checkboxes
     id: impact
-    attributes:
-      label: 영향도
-      options:
-        - label: 결제/주문 흐름에 직접 영향 있음
-        - label: UI만 깨짐
+  
