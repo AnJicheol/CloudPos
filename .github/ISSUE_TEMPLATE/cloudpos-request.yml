@@ -10,18 +10,21 @@ body:
       placeholder: 예) 포스기-점주 매핑 화면에 검색 추가
     validations:
       required: true
+
   - type: textarea
     id: context
     attributes:
       label: 배경/상황
       description: 어떤 업무를 하다가 필요했는지 적어주세요.
+
   - type: textarea
     id: what
     attributes:
       label: 요청 내용
       placeholder: 예) 점주명/포스기ID로 필터링할 수 있게 해주세요.
-      validations:
-        required: true
+    validations:
+      required: true
+
   - type: dropdown
     id: priority
     attributes:
