@@ -46,15 +46,6 @@ com.yourapp.pos
 
 <br><br>
 
-## 🧱 프로퍼티 
-
-src/main/resources/
-  application.yml            # 공통
-  application-dev.yml        # 로컬/개발
-  application-prod.yml       # 운영
-  application-test.yml       # 테스트 
-
-
 ## 📏 네이밍 규칙
 
 | 대상 | 적용 범위 | 규칙 |
@@ -105,6 +96,7 @@ ex) feat/#123-add-cart-item-api
 
 ## 🛠 개발 규칙 (CloudPosProject)
 
+```md
 1. 단위 테스트 필수
 2. 문서화(Javadoc) 필수
   * 공개 메서드(public)와 도메인 엔티티에는 Javadoc 작성
@@ -116,7 +108,7 @@ ex) feat/#123-add-cart-item-api
   * 개인 개발용은 application-{name}.yml 또는 .env 만들어서 사용 (커밋 금지)
 5. YML에 민감정보 직접 기입 금지 (AWS로 별도 관리)
 6. env 파일 커밋 금지
-
+```
 
 
 
