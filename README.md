@@ -1,5 +1,46 @@
 # CloudPos
 
+## 🧱 패키지/모듈 구조
+
+```text
+com.yourapp.pos
+  ├─ auth              // 인증/권한, 카카오 로그인, 점주-포스기 1:N 연동
+  │  ├─ domain
+  │  └─ application
+  ├─ order             // 주문 프로세스, 결제신청→완료신호→장바구니 비우기
+  │  ├─ domain
+  │  └─ application
+  ├─ cart              // 장바구니 생성/추가/수량/삭제/결제시 비우기
+  │  ├─ domain
+  │  └─ application
+  ├─ product           // 상품: id, 이름, 가격, 상태 / 생성·조회·수정
+  │  ├─ domain
+  │  └─ application
+  ├─ inventory         // 재고/상품 관리: 등록, 품절, 수동추천
+  │  ├─ domain
+  │  └─ application
+  ├─ payment           // 결제/할인 인터페이스, 현금/카드, 외부 모듈 어댑터
+  │  ├─ domain
+  │  └─ application
+  └─ common            // 공통 예외, 공통 dto, 유틸
+```
+
+<br><br>
+
+## 📏 네이밍 규칙
+
+| 대상 | 적용 범위 | 규칙 |
+| --- | --- | --- |
+| 파일/클래스 | `class`, `interface`, `enum`, 스프링 컴포넌트 | **UpperCamelCase** *(= PascalCase, 파스칼)* |
+| 메서드 | 모든 메서드/핸들러 | **lowerCamelCase** *(로워 카멜)* |
+| 변수 | 필드/지역/파라미터 | **lowerCamelCase** |
+| 상수 | `static final` | **UPPER_SNAKE_CASE** *(대문자 스네이크)* |
+| 패키지 | 패키지 경로 | **모두 소문자 + 점(.)** |
+| 엔티티 필드 | JPA 엔티티 속성 | **lowerCamelCase** |
+| DB 테이블/컬럼 | 스키마/마이그레이션 | **snake_case** *(스네이크)* |
+| 엔티티↔DB 매핑 | `@Table`, `@Column` | 엔티티=c**amel**, DB=**snake** |
+
+<br><br>
 
 ## 🌀 Git Flow 전략
 
