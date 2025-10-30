@@ -1,0 +1,31 @@
+name: ✨ CloudPos 기능 추가
+description: CloudPosProject에 새로운 기능을 추가할 때 사용하세요.
+title: "[FEAT] "
+labels: ["feature"]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: 기능 요약
+      placeholder: 예) 포스 단말 리스트 조회 화면 추가
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: 상세 설명
+      description: 어떤 흐름으로 동작해야 하는지 적어주세요.
+  - type: textarea
+    id: reason
+    attributes:
+      label: 필요한 이유
+      placeholder: 예) 점주가 연결된 포스 단말을 관리해야 함
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 적용 범위
+      options:
+        - backend
+        - frontend
+        - infra
+        - docs
