@@ -1,5 +1,25 @@
 # CloudPos
 
+## 프로세스
+
+1. 이슈 생성 → 백로그(Backlog) 배치
+
+2. 이슈 담당자 지정 후 In progress로 이동
+
+3. 로컬에서 dev 최신 받기
+
+4. dev에서 feature 브랜치 생성
+
+5. 기능 개발 후 dev 대상으로 PR 생성
+
+6. 코드 리뷰 → 통과 시 dev에 머지
+
+7. 기능들이 dev에 일정량 모이면 release 브랜치 생성
+
+
+
+<br><br>
+
 ## 🧱 패키지/모듈 구조
 
 ```text
