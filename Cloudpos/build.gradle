@@ -19,21 +19,25 @@ repositories {
 }
 
 dependencies {
-    // --- 애플리케이션 ---
-    implementation 'org.springframework.boot:spring-boot-starter-web'       // MVC/JSON
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'  // JPA
-    implementation 'org.springframework.boot:spring-boot-starter-validation'// Bean Validation
 
-    runtimeOnly 'com.h2database:h2'                                         // 로컬 인메모리 DB
+    // JPA
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
-    // Lombok (컴파일 전용)
+    // DB 드라이버
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // 선택: 설정 바인딩 메타데이터(IDE 지원용)
-    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
 
-    // --- 테스트 ---
+    //auth
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
