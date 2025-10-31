@@ -1,6 +1,8 @@
 package org.example.cloudpos.order.domain;
 
 import jakarta.persistence.*;
+import lombok.Builder;
+import lombok.Getter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.List;
  * 주문의 생성, 결제시각, 상태 등을 보관한다.
  * 비즈니스 로직은 Service 계층에서 처리하는 것을 기본으로 하되,
  * 편의상 항목 추가(addItem) 같은 도메인 메서드를 제공한다.
+ * </p>
  */
 @Entity
 @Table(name="orders")
+@Getter
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,17 +43,10 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
-    // === 편의 메서드 ===
-    public void addItem(OrderItem item) {
-        items.add(item);
-        item.setOrder(this);
-    }
 
-    // === 정적 생성 ===
-    public static Order create(OrderStatus status) {
-        Order o = new Order();
-        o.status = status;
-        o.createdAt = LocalDateTime.now();
-        return o;
+    @Builder
+    public Order(OrderStatus status) {
+        this.status = status;
+        this.createdAt = LocalDateTime.now();
     }
 }

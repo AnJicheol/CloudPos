@@ -2,8 +2,6 @@ package org.example.cloudpos.order.domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.Setter;
-
 
 /**
  * 주문에 포함된 개별 상품 정보를 나타내는 엔티티.
@@ -16,19 +14,12 @@ import lombok.Setter;
 @Entity
 @Table(name = "orderitem")
 @Getter
-@Setter
 public class OrderItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * 주문(Order)과의 연관관계 (다대일)
-     * <p>
-     * 하나의 주문에는 여러 OrderItem이 포함될 수 있다.
-     * </p>
-     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "order_id")
     private Order order;
