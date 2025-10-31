@@ -94,6 +94,9 @@ com.yourapp.pos
 | `release/*` | 배포 준비 | 테스트 완료 후 master로 병합 |
 
 
+브랜치명 + 이슈 번호 + 이슈 제목
+ex) feat/#123-add-cart-item-api
+
 
 <br><br>
 
