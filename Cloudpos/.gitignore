@@ -18,10 +18,20 @@ bin/
 !**/src/test/**/bin/
 
 ### IntelliJ IDEA ###
-.idea
+# 전체 .idea 폴더 막기
+.idea/
+# 혹시 남아있는 최상위 설정파일들
 *.iws
 *.iml
 *.ipr
+# IDEA가 가끔 만드는 워크스페이스/작업 파일
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf/
+.idea/**/httpRequests/
+# 빌드 결과
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
