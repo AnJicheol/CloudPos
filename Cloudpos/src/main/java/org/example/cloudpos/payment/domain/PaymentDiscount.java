@@ -8,6 +8,21 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * 결제 할인 내역(PaymentDiscount) 엔티티
+ *
+ * 결제(Payment)에 적용된 할인 정책(DiscountPolicy)과
+ * 실제 할인 금액을 기록하는 엔티티입니다.
+ *
+ * 예: 결제 A에 '여름 세일 10%' 정책이 적용되어 3,000원이 할인된 경우,
+ *     해당 정보를 저장합니다.
+ *
+ * 주요 역할:
+ *  - 결제와 할인 정책의 연결 (다대일 관계)
+ *  - 실제 적용된 할인 금액 저장
+ *  - 생성 일시 자동 기록
+ */
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

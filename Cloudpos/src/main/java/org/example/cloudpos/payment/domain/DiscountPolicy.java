@@ -7,7 +7,19 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
+/**
+ * 할인 정책(DiscountPolicy) 엔티티
+ *
+ * 결제 시스템에서 적용되는 할인 정책 정보를 저장하는 도메인 클래스입니다.
+ * 예: '여름 정기 세일 10%' 또는 '신규 가입자 5000원 할인' 등의 정책
+ *
+ * 주요 기능:
+ *  - 할인 유형(퍼센트 / 금액)
+ *  - 할인 값
+ *  - 정책 활성 여부
+ *  - 유효 기간(시작일 ~ 종료일)
+ *  - 생성 / 수정 일자 자동 관리
+ */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
