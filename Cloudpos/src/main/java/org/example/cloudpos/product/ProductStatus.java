@@ -25,3 +25,4 @@ public enum ProductStatus {
 
     ARCHIVED
 }
+

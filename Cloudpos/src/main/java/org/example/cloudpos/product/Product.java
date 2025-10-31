@@ -47,3 +47,4 @@ public class Product {
     @Column(nullable = false, length = 16)
     private ProductStatus status = ProductStatus.ACTIVE;
 }
+
