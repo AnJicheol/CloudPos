@@ -1,5 +1,6 @@
 package org.example.cloudpos.product;
 
+import com.github.f4b6a3.ulid.UlidCreator;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
@@ -11,9 +12,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.UUID;
-
 /**
  * {@link ProductService} 구현체로,
  * 상품 생성, 조회, 삭제(소프트 삭제) 등의 비즈니스 로직을 담당합니다.
@@ -24,7 +22,7 @@ import java.util.UUID;
  * <p>상품의 식별자는 두 가지를 사용합니다:</p>
  * <ul>
  *     <li>{@code id} — DB 기본 키 (자동 증가)</li>
- *     <li>{@code productId} — 비즈니스용 상품 코드 (자동 또는 사용자 입력)</li>
+ *     <li>{@code productId} — 비즈니스용 상품 코드 (ULID 기반 자동 생성)</li>
  * </ul>
  *
  * <h3>이미지 관리</h3>
@@ -46,27 +44,18 @@ public class ProductServiceImpl implements ProductService {
     /**
      * 신규 상품을 생성합니다.
      *
-     * <p>{@code productId} 가 요청에서 생략된 경우 서버에서 자동 생성되며,
-     * 존재하는 경우에는 {@code 중복 여부} 를 확인합니다.</p>
+     * <p>상품 식별자인 {@code productId}는 ULID 방식으로 자동 생성되며,
+     * 요청 본문에는 포함되지 않습니다.</p>
      *
      * <p>{@code imageUrl}은 선택적 필드로, 입력되지 않으면 null로 저장됩니다.</p>
      *
      * @param req 상품 생성 요청 DTO
      * @return 생성된 상품의 DB 기본 키(id)
-     * @throws DuplicateProductIdException productId가 이미 존재할 경우
      */
     @Override
     public Long create(ProductCreateRequest req) {
-        String pid = (req.productId() == null || req.productId().isBlank())
-                ? generateProductId()
-                : req.productId();
-
-        if (repo.existsByProductId(pid)) {
-            throw new DuplicateProductIdException(pid);
-        }
-
         Product p = new Product();
-        p.setProductId(pid);
+        p.setProductId(UlidCreator.getUlid().toString());
         p.setName(req.name());
         p.setPrice(req.price());
         p.setStatus(req.status() != null ? req.status() : ProductStatus.ACTIVE);
@@ -152,22 +141,5 @@ public class ProductServiceImpl implements ProductService {
         if (req.imageUrl() != null) {
             p.setImageUrl(req.imageUrl());
         }
-    }
-
-
-    /**
-     * 비즈니스용 상품 식별자(Product ID)를 자동 생성합니다.
-     *
-     * <p>예시 형식: {@code P-2025-8F91ACD2}</p>
-     * <ul>
-     *     <li>{@code P-} — 상품 도메인 prefix</li>
-     *     <li>{@code YYYY} — 생성 연도</li>
-     *     <li>{@code 랜덤 8자리 UUID} — 중복 방지</li>
-     * </ul>
-     *
-     * @return 생성된 상품 코드 문자열
-     */
-    private String generateProductId() {
-        return "P-" + LocalDate.now().getYear() + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 }

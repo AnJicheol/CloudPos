@@ -16,11 +16,11 @@ import lombok.Setter;
  * <h3>식별자 설계</h3>
  * <ul>
  *     <li>{@code id} — 데이터베이스 기본 키(PK). 자동 증가 값. 외부 노출용 아님</li>
- *     <li>{@code productId} — 비즈니스용 상품 코드. 외부 API/다른 도메인과 연동 시 사용</li>
+ *     <li>{@code productId} — 비즈니스용 상품 코드(ULID 기반). 외부 API 및 다른 도메인과 연동 시 사용</li>
  * </ul>
  *
- * <p>{@code productId}는 유니크 제약이 적용되어 있으며,
- * 값이 없을 경우 서비스 계층에서 자동 생성됩니다.</p>
+ * <p>{@code productId}는 고유(UNIQUE) 제약이 적용되며,
+ * 값이 비어 있을 경우 서비스 계층에서 ULID 기반 문자열로 자동 생성됩니다.</p>
  *
  * <h3>유효성 검증</h3>
  * <ul>
@@ -68,12 +68,12 @@ public class Product {
     /**
      * 비즈니스용 상품 코드.
      *
-     * <p>외부 시스템/다른 도메인(API, 주문, 재고 등)에서 참조할 때 사용됩니다.
-     * 사용자 입력 또는 서버 자동 생성 방식 모두 지원합니다.</p>
+     * <p>외부 시스템(주문, 재고 등)에서 참조할 때 사용되는 고유한 문자열 ID입니다.
+     * ULID 기반으로 서비스 계층에서 자동 생성됩니다.</p>
      *
-     * <p>DB 제약: UNIQUE + NOT NULL</p>
+     * <p>DB 제약 조건: UNIQUE + NOT NULL</p>
      */
-    @Column(name = "product_id", unique = true, nullable = false, length = 50)
+    @Column(name = "product_id", unique = true, nullable = false, length = 26)
     private String productId;
 
     /**
