@@ -4,6 +4,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
+import org.example.cloudpos.product.dto.ProductUpdateRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,6 +65,17 @@ public class ProductController {
     @GetMapping("/{id}")
     public ProductResponse get(@PathVariable Long id) {
         return service.get(id);
+    }
+
+    @GetMapping
+    public Page<ProductResponse> list(Pageable pageable) {
+        return service.list(pageable);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody ProductUpdateRequest req) {
+        service.update(id, req);
+        return ResponseEntity.noContent().build();
     }
 
     /**

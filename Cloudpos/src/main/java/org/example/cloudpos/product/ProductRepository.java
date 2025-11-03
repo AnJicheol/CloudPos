@@ -1,5 +1,7 @@
 package org.example.cloudpos.product;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -47,4 +49,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @return 조회 결과. 존재하지 않을 경우 {@link Optional#empty()}
      */
     Optional<Product> findByProductId(String productId);
+    Page<Product> findByStatusNot(ProductStatus status, Pageable pageable);
 }

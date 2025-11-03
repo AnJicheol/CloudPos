@@ -3,8 +3,11 @@ package org.example.cloudpos.product;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
+import org.example.cloudpos.product.dto.ProductUpdateRequest;
 import org.example.cloudpos.product.exception.DuplicateProductIdException;
 import org.example.cloudpos.product.exception.ProductNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,6 +93,28 @@ public class ProductServiceImpl implements ProductService {
     public void archive(Long id) {
         Product p = repo.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
         p.setStatus(ProductStatus.ARCHIVED);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Page<ProductResponse> list(Pageable pageable) {
+        return repo.findByStatusNot(ProductStatus.ARCHIVED, pageable)
+                .map(p -> new ProductResponse(p.getId(), p.getProductId(), p.getName(), p.getPrice(), p.getStatus()));
+    }
+
+    @Override
+    public void update(Long id, ProductUpdateRequest req) {
+        Product p = repo.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
+
+        if (req.name() != null) {
+            p.setName(req.name());
+        }
+        if (req.price() != null) {
+            p.setPrice(req.price());
+        }
+        if (req.status() != null) {
+            p.setStatus(req.status());
+        }
     }
 
     /**

@@ -2,6 +2,9 @@ package org.example.cloudpos.product;
 
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
+import org.example.cloudpos.product.dto.ProductUpdateRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * 상품 도메인의 비즈니스 로직을 정의하는 서비스 인터페이스입니다.
@@ -49,4 +52,6 @@ public interface ProductService {
      *         삭제 대상이 존재하지 않을 경우
      */
     void archive(Long id);
+    Page<ProductResponse> list(Pageable pageable);
+    void update(Long id, ProductUpdateRequest req);
 }
