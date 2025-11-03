@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
 import org.example.cloudpos.product.dto.ProductUpdateRequest;
-import org.example.cloudpos.product.exception.DuplicateProductIdException;
 import org.example.cloudpos.product.exception.ProductNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -15,12 +15,6 @@ import java.util.Map;
  * <p>예외 처리 시 HTTP 상태 코드와 JSON 형식의 응답을 반환하며,
  * 클라이언트가 에러 원인을 명확히 파악할 수 있도록 메시지를 제공합니다.</p>
  *
- * <pre>
- * {
- *   "message": "Duplicated productId: P-2025-ABCD1234",
- *   "domain": "product"
- * }
- * </pre>
  *
  * @author Esther
  * @since 1.0
@@ -39,22 +33,6 @@ public class ProductExceptionHandler {
     @ExceptionHandler(ProductNotFoundException.class)
     public ResponseEntity<?> handleNotFound(ProductNotFoundException e) {
         return ResponseEntity.status(404).body(Map.of(
-                "message", e.getMessage(),
-                "domain", "product"
-        ));
-    }
-
-    /**
-     * productId가 중복될 경우 발생하는 예외를 처리합니다.
-     *
-     * <p>처리 결과로 {@code 409 Conflict} 상태 코드를 반환합니다.</p>
-     *
-     * @param e {@link DuplicateProductIdException} 예외 객체
-     * @return JSON Body + 409 응답
-     */
-    @ExceptionHandler(DuplicateProductIdException.class)
-    public ResponseEntity<?> handleConflict(DuplicateProductIdException e) {
-        return ResponseEntity.status(409).body(Map.of(
                 "message", e.getMessage(),
                 "domain", "product"
         ));
