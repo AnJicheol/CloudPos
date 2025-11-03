@@ -10,7 +10,7 @@ import lombok.Setter;
  * 상품 정보를 나타내는 도메인 엔티티 클래스입니다.
  *
  * <p>이 클래스는 {@code products} 테이블과 매핑되며,
- * 상품의 기본 정보(식별자, 이름, 가격, 상태 등)를 관리합니다.
+ * 상품의 기본 정보(식별자, 이름, 가격, 상태, 대표이미지 등)를 관리합니다.
  * JPA 엔티티로서 데이터베이스와 직접 연동됩니다.</p>
  *
  * <h3>식별자 설계</h3>
@@ -28,6 +28,13 @@ import lombok.Setter;
  *   <li>{@link #price} — 0 이상 ({@link Min})</li>
  *   <li>{@link #status} — {@link ProductStatus} enum 저장 (기본값: ACTIVE)</li>
  * </ul>
+ *
+ * <h3>이미지 관리</h3>
+ *  * <ul>
+ *  *   <li>{@link #imageUrl} — 상품의 대표 이미지 URL. 선택 입력 필드</li>
+ *  *   <li>서버는 URL 존재 여부를 검증하지 않으며, 문자열만 저장합니다.</li>
+ *  *   <li>예: {@code https://cdn.example.com/images/americano.jpg}</li>
+ *  * </ul>
  *
  * @author Esther
  * @since 1.0
@@ -68,4 +75,15 @@ public class Product {
      */
     @Column(name = "product_id", unique = true, nullable = false, length = 50)
     private String productId;
+
+    /**
+     * 대표 이미지 URL.
+     *
+     * <p>CDN, S3, 또는 외부 저장소에 업로드된 상품 이미지를 가리키며,
+     * 존재하지 않아도 무방합니다.</p>
+     *
+     * <p>예: {@code https://cdn.example.com/images/americano.jpg}</p>
+     */
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
 }

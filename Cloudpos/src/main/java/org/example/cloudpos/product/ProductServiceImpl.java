@@ -27,6 +27,12 @@ import java.util.UUID;
  *     <li>{@code productId} — 비즈니스용 상품 코드 (자동 또는 사용자 입력)</li>
  * </ul>
  *
+ * <h3>이미지 관리</h3>
+ * <ul>
+ *     <li>{@code imageUrl} — 대표 이미지 URL로, 실제 이미지 존재 여부는 검증하지 않습니다.</li>
+ *     <li>URL 문자열만 저장하며, 외부 CDN 또는 S3 경로를 지정할 수 있습니다.</li>
+ * </ul>
+ *
  * @author Esther
  * @since 1.0
  */
@@ -42,6 +48,8 @@ public class ProductServiceImpl implements ProductService {
      *
      * <p>{@code productId} 가 요청에서 생략된 경우 서버에서 자동 생성되며,
      * 존재하는 경우에는 {@code 중복 여부} 를 확인합니다.</p>
+     *
+     * <p>{@code imageUrl}은 선택적 필드로, 입력되지 않으면 null로 저장됩니다.</p>
      *
      * @param req 상품 생성 요청 DTO
      * @return 생성된 상품의 DB 기본 키(id)
@@ -62,6 +70,7 @@ public class ProductServiceImpl implements ProductService {
         p.setName(req.name());
         p.setPrice(req.price());
         p.setStatus(req.status() != null ? req.status() : ProductStatus.ACTIVE);
+        p.setImageUrl(req.imageUrl());
 
         return repo.save(p).getId();
     }
@@ -77,7 +86,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponse get(Long id) {
         Product p = repo.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
-        return new ProductResponse(p.getId(), p.getProductId(), p.getName(), p.getPrice(), p.getStatus());
+        return new ProductResponse(p.getId(), p.getProductId(), p.getName(), p.getPrice(), p.getStatus(),p.getImageUrl());
     }
 
     /**
@@ -102,7 +111,7 @@ public class ProductServiceImpl implements ProductService {
      * 요청된 {@link Pageable} 정보를 이용해 페이지네이션과 정렬을 수행합니다.</p>
      *
      * <p>조회 결과는 {@link ProductResponse} DTO로 변환되어 반환되며,
-     * 각 항목은 상품의 주요 속성(id, 상품코드, 이름, 가격, 상태)을 포함합니다.</p>
+     * 각 항목은 상품의 주요 속성(id, 상품코드, 이름, 가격, 상태, 대표이미지)을 포함합니다.</p>
      *
      * @param pageable 페이지 요청 정보 (페이지 번호, 크기, 정렬 조건 등)
      * @return 상품 목록 페이지 객체
@@ -111,7 +120,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Page<ProductResponse> list(Pageable pageable) {
         return repo.findByStatusNot(ProductStatus.ARCHIVED, pageable)
-                .map(p -> new ProductResponse(p.getId(), p.getProductId(), p.getName(), p.getPrice(), p.getStatus()));
+                .map(p -> new ProductResponse(p.getId(), p.getProductId(), p.getName(), p.getPrice(), p.getStatus(),p.getImageUrl()));
     }
 
     /**
@@ -139,6 +148,9 @@ public class ProductServiceImpl implements ProductService {
         }
         if (req.status() != null) {
             p.setStatus(req.status());
+        }
+        if (req.imageUrl() != null) {
+            p.setImageUrl(req.imageUrl());
         }
     }
 

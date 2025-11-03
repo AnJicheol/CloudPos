@@ -16,6 +16,7 @@ import org.example.cloudpos.product.ProductStatus;
  * @param name      상품명
  * @param price     가격(원 단위)
  * @param status    현재 상품 상태 (ACTIVE, INACTIVE, ARCHIVED 등)
+ * @param imageUrl  대표 이미지 URL (없을 수 있음)
  *
  * @author Esther
  * @since 1.0
@@ -25,5 +26,6 @@ public record ProductResponse(
         String productId,
         String name,
         int price,
-        ProductStatus status
+        ProductStatus status,
+        String imageUrl
 ) {}

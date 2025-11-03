@@ -19,6 +19,7 @@ import org.example.cloudpos.product.ProductStatus;
  * @param name   변경할 상품명 (선택)
  * @param price  변경할 상품 가격 (선택)
  * @param status 변경할 상품 상태 (선택, 예: ACTIVE, ARCHIVED)
+ * @param imageUrl 변경할 대표 이미지 URL(선택)
  *
  * @author Esther
  * @since 1.0
@@ -26,5 +27,6 @@ import org.example.cloudpos.product.ProductStatus;
 public record ProductUpdateRequest(
         String name,
         Integer price,
-        ProductStatus status
+        ProductStatus status,
+        String imageUrl
 ) {}
