@@ -25,6 +25,7 @@ import java.util.Optional;
  * <ul>
  *     <li>{@link #existsByProductId(String)} — 비즈니스용 productId 중복 여부 확인</li>
  *     <li>{@link #findByProductId(String)} — productId 기준 단건 조회</li>
+ *     <li>{@link #findByStatusNot(ProductStatus, Pageable)} — 특정 상태를 제외한 상품 목록 조회 (페이징)</li>
  * </ul>
  *
  * @author Esther
@@ -49,5 +50,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @return 조회 결과. 존재하지 않을 경우 {@link Optional#empty()}
      */
     Optional<Product> findByProductId(String productId);
+
+    /**
+     * 지정된 상태를 제외한 상품 목록을 페이지 단위로 조회합니다.
+     *
+     * <p>예를 들어, {@code ProductStatus.ARCHIVED} 를 제외하여
+     * 활성 상품만 조회할 때 사용됩니다.</p>
+     *
+     * @param status 제외할 상품 상태
+     * @param pageable 페이지 요청 정보 (페이지 번호, 크기, 정렬 조건 등)
+     * @return 조건에 해당하는 상품 목록 페이지 객체
+     */
     Page<Product> findByStatusNot(ProductStatus status, Pageable pageable);
 }

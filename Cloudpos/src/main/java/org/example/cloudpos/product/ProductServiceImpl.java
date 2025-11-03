@@ -95,6 +95,18 @@ public class ProductServiceImpl implements ProductService {
         p.setStatus(ProductStatus.ARCHIVED);
     }
 
+    /**
+     * 상품 목록을 페이지 단위로 조회합니다.
+     *
+     * <p>아카이브(ARCHIVED) 상태가 아닌 상품만 조회되며,
+     * 요청된 {@link Pageable} 정보를 이용해 페이지네이션과 정렬을 수행합니다.</p>
+     *
+     * <p>조회 결과는 {@link ProductResponse} DTO로 변환되어 반환되며,
+     * 각 항목은 상품의 주요 속성(id, 상품코드, 이름, 가격, 상태)을 포함합니다.</p>
+     *
+     * @param pageable 페이지 요청 정보 (페이지 번호, 크기, 정렬 조건 등)
+     * @return 상품 목록 페이지 객체
+     */
     @Transactional(readOnly = true)
     @Override
     public Page<ProductResponse> list(Pageable pageable) {
@@ -102,6 +114,19 @@ public class ProductServiceImpl implements ProductService {
                 .map(p -> new ProductResponse(p.getId(), p.getProductId(), p.getName(), p.getPrice(), p.getStatus()));
     }
 
+    /**
+     * 기존 상품 정보를 수정합니다.
+     *
+     * <p>요청 객체에 포함된 필드만 업데이트되며,
+     * null 값으로 전달된 필드는 변경되지 않습니다.</p>
+     *
+     * <p>상품이 존재하지 않을 경우 {@link ProductNotFoundException}이 발생하며,
+     * 수정된 엔티티는 트랜잭션 종료 시점에 JPA Dirty Checking을 통해 자동 반영됩니다.</p>
+     *
+     * @param id 수정 대상 상품의 DB 기본 키
+     * @param req 수정할 상품 정보가 담긴 요청 DTO
+     * @throws ProductNotFoundException 수정 대상 상품이 존재하지 않을 경우
+     */
     @Override
     public void update(Long id, ProductUpdateRequest req) {
         Product p = repo.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
@@ -116,6 +141,7 @@ public class ProductServiceImpl implements ProductService {
             p.setStatus(req.status());
         }
     }
+
 
     /**
      * 비즈니스용 상품 식별자(Product ID)를 자동 생성합니다.
