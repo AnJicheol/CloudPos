@@ -1,7 +1,9 @@
-package org.example.cloudpos.product;
+package org.example.cloudpos.product.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.cloudpos.product.service.ProductService;
+import org.example.cloudpos.product.domain.ProductStatus;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
 import org.example.cloudpos.product.dto.ProductUpdateRequest;

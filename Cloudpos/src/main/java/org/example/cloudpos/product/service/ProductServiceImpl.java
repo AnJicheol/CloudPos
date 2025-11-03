@@ -1,11 +1,14 @@
-package org.example.cloudpos.product;
+package org.example.cloudpos.product.service;
 
 import com.github.f4b6a3.ulid.UlidCreator;
 import lombok.RequiredArgsConstructor;
+import org.example.cloudpos.product.domain.ProductStatus;
+import org.example.cloudpos.product.domain.Product;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
 import org.example.cloudpos.product.dto.ProductUpdateRequest;
 import org.example.cloudpos.product.exception.ProductNotFoundException;
+import org.example.cloudpos.product.repository.ProductRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

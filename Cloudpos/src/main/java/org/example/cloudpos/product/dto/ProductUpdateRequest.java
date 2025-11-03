@@ -1,6 +1,6 @@
 package org.example.cloudpos.product.dto;
 
-import org.example.cloudpos.product.ProductStatus;
+import org.example.cloudpos.product.domain.ProductStatus;
 
 /**
  * 상품 수정(PATCH) 요청을 표현하는 DTO입니다.

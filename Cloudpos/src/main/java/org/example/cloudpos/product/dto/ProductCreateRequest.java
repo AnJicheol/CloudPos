@@ -2,7 +2,7 @@ package org.example.cloudpos.product.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import org.example.cloudpos.product.ProductStatus;
+import org.example.cloudpos.product.domain.ProductStatus;
 
 /**
  * 상품 생성 요청을 표현하는 DTO입니다.

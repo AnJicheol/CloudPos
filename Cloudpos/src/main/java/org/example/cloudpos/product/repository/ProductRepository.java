@@ -1,5 +1,7 @@
-package org.example.cloudpos.product;
+package org.example.cloudpos.product.repository;
 
+import org.example.cloudpos.product.domain.ProductStatus;
+import org.example.cloudpos.product.domain.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

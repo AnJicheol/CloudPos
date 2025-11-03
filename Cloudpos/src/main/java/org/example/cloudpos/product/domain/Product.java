@@ -1,4 +1,4 @@
-package org.example.cloudpos.product;
+package org.example.cloudpos.product.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;

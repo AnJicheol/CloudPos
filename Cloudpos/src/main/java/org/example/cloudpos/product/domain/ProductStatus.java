@@ -1,4 +1,4 @@
-package org.example.cloudpos.product;
+package org.example.cloudpos.product.domain;
 
 /**
  * 상품의 현재 상태를 나타내는 열거형(Enum)입니다.
