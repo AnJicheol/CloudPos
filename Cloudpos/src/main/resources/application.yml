@@ -1,0 +1,35 @@
+server:
+  port: 8080
+  address: 0.0.0.0  # 외부 접근 허용 (로컬 테스트용)
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/cloudpos?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root     # 👉 본인 MySQL 아이디로 바꿔
+    password: suho1234!       # 👉 본인 MySQL 비밀번호로 바꿔
+
+  jpa:
+    hibernate:
+      ddl-auto: create   # create / update / none 중 선택 (개발 중이라면 update 추천)
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+
+toss:
+  base-url: https://api.tosspayments.com/v2/payments
+  client-key: test_ck_ZLKGPx4M3MxGReNMyzww8BaWypv1
+  secret-key: test_sk_Z61JOxRQVEokdm9mZZyg8W0X9bAq
+  # 프론트용 키 변수명 구분용
+  widget-client-key: ${toss.client-key}
