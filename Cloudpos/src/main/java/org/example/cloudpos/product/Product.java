@@ -35,7 +35,6 @@ import lombok.Setter;
 @Entity
 @Table(name = "products")
 @Getter
-@Setter
 public class Product {
 
     /** 내부용 PK (자동 증가) */
