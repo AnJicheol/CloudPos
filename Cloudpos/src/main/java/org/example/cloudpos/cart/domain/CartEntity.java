@@ -15,7 +15,7 @@ public class CartEntity {
     private Long id;
 
     @Column(name="cart_id", nullable = false, unique = true)
-    private Long cartId;
+    private String cartId;
 
     @Column(name="user_id", nullable = false)
     private Long userId;
