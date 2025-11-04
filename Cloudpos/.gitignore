@@ -1,3 +1,11 @@
+# ===== 기본/IDE 개별 무시 =====
+/shelf/
+/workspace.xml
+/httpRequests/
+/dataSources/
+/dataSources.local.xml
+
+# ===== 프로젝트 루트에서 자주 생기는 것들 =====
 HELP.md
 .gradle
 build/
@@ -5,7 +13,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### STS ###
+# ===== STS =====
 .apt_generated
 .classpath
 .factorypath
@@ -17,7 +25,7 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-### IntelliJ IDEA ###
+# ===== IntelliJ IDEA =====
 # 전체 .idea 폴더 막기
 .idea/
 # 혹시 남아있는 최상위 설정파일들
@@ -36,12 +44,45 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-### NetBeans ###
+# ===== NetBeans =====
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+# ===== VS Code =====
 .vscode/
+
+# ===== Docker / Compose =====
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile
+Dockerfile.*
+*.dockerfile
+.docker/
+docker/
+
+# ===== Gradle 설정/빌드 스크립트 자체 막기 =====
+build.gradle
+build.gradle.kts
+settings.gradle
+settings.gradle.kts
+gradle.properties
+
+# ===== Spring / 애플리케이션 설정 =====
+application.properties
+application-*.properties
+application.yml
+application.yaml
+application-*.yml
+application-*.yaml
+
+# ===== 환경 변수 파일 =====
+.env
+.env.*
+*.env
+
+# ===== 기타 YAML 통째로 막기 (필요하면 아래에 !로 예외 추가) =====
+*.yml
+*.yaml
