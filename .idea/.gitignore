@@ -1,8 +1,61 @@
-# 디폴트 무시된 파일
+# IntelliJ / IDEA
+/.idea/
+/*.iml
 /shelf/
 /workspace.xml
-# 에디터 기반 HTTP 클라이언트 요청
+
+# HTTP client
 /httpRequests/
-# Datasource local storage ignored files
+
+# Datasource local storage
 /dataSources/
 /dataSources.local.xml
+
+# Docker / Compose
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile
+Dockerfile.*
+*.dockerfile
+
+# Gradle
+.gradle/
+build/
+out/
+**/build/
+gradle-app.setting
+gradle.properties
+settings.gradle
+build.gradle
+build.gradle.kts
+settings.gradle.kts
+
+# Maven (혹시 같이 쓸 때)
+target/
+
+# Spring / 설정계
+application.yml
+application.yaml
+application-*.yml
+application-*.yaml
+application.properties
+application-*.properties
+
+# 환경변수 파일
+.env
+.env.*
+*.env
+
+# 기타 설정/배포 yml들 통째로 막기
+*.yml
+*.yaml
+
+# 로컬 실행 스크립트 / 배포 스크립트
+*.sh
+*.bat
+deploy/
+scripts/
+
+# Docker 빌드 관련 임시
+.docker/
+docker/
