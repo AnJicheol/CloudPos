@@ -59,3 +59,7 @@ scripts/
 # Docker 빌드 관련 임시
 .docker/
 docker/
+
+.idea/*.xml
+.idea/**/dataSources/
+.idea/**/httpRequests/
