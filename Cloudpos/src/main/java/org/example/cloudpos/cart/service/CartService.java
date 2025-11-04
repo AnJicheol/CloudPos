@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -38,9 +39,16 @@ public class CartService {
         redisTemplate.opsForList().rightPush(redisKey,productId+":"+quantity);
         redisTemplate.opsForValue().set(stateKey(cartId), next.name(), TTL);
         redisTemplate.expire(redisKey, TTL);
+        return true;
     }
 
     public boolean removeItem(String cartId, String productId) {
+        String redisKey = key(cartId);
+        List<String> items = redisTemplate.opsForList().range(redisKey, 0, -1);
+        if(items==null || items.isEmpty()) return false;
+
+        for(String)
+
     }
 
 
