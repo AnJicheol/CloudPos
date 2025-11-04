@@ -38,7 +38,7 @@ public class CartEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name="cart_id", nullable = false, unique = true)
+    @Column(name="cart_id", nullable = false, unique = true, length=26)
     private String cartId;
 
     @Column(name="user_id", nullable = false)
@@ -47,4 +47,5 @@ public class CartEntity {
     @Enumerated(EnumType.STRING)
     @Column(name="state", nullable=false)
     private CartState state= CartState.EMPTY;
+
 }
