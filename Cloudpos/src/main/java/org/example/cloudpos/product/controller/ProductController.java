@@ -1,9 +1,14 @@
-package org.example.cloudpos.product;
+package org.example.cloudpos.product.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.cloudpos.product.service.ProductService;
+import org.example.cloudpos.product.domain.ProductStatus;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
+import org.example.cloudpos.product.dto.ProductUpdateRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,6 +67,41 @@ public class ProductController {
     @GetMapping("/{id}")
     public ProductResponse get(@PathVariable Long id) {
         return service.get(id);
+    }
+
+    /**
+     * 상품 목록을 페이지 단위로 조회합니다.
+     *
+     * <p>상품명, 가격, 상태 등의 기본 정보를 포함하며
+     * 페이지네이션(Pageable) 파라미터를 이용해 페이지 번호와 크기를 지정할 수 있습니다.</p>
+     *
+     * <p>예: <code>/api/products?page=0&size=10&sort=name,asc</code></p>
+     *
+     * @param pageable 페이지 요청 정보 (페이지 번호, 크기, 정렬 기준 등)
+     * @return 상품 목록의 페이지 객체
+     */
+    @GetMapping
+    public Page<ProductResponse> list(Pageable pageable) {
+        return service.list(pageable);
+    }
+
+    /**
+     * 기존 상품 정보를 수정합니다.
+     *
+     * <p>요청 본문에는 수정할 필드(예: 이름, 가격, 상태 등)만 포함할 수 있으며,
+     * 부분 업데이트(PATCH) 방식으로 동작합니다.</p>
+     *
+     * <p>상품이 존재하지 않으면 {@code 404 Not Found} 예외가 발생하며,
+     * 요청이 성공하면 본문 없는 {@code 204 No Content}를 반환합니다.</p>
+     *
+     * @param id 수정할 상품의 기본키 ID
+     * @param req 상품 수정 요청 DTO
+     * @return 본문 없는 {@code 204 No Content} 응답
+     */
+    @PatchMapping("/{id}")
+    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody ProductUpdateRequest req) {
+        service.update(id, req);
+        return ResponseEntity.noContent().build();
     }
 
     /**
