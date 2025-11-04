@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.cart.domain.CartState;
 import org.example.cloudpos.cart.dto.CartItemDto;
 import org.example.cloudpos.cart.dto.ProductCartDto;
+import org.example.cloudpos.cart.exception.CartExpiredException;
 import org.example.cloudpos.cart.fsm.CartEvent;
 import org.example.cloudpos.cart.fsm.CartStateMachine;
 import org.example.cloudpos.product.service.ProductService;
@@ -124,6 +125,15 @@ public class CartService {
         redisTemplate.delete(itemSetKey(cartId));
         redisTemplate.delete(itemsKey(cartId));
         redisTemplate.delete(stateKey(cartId));
+    }
+
+
+    private void ensureAlive(String cartId) {
+        if (!Boolean.TRUE.equals(redisTemplate.hasKey(stateKey(cartId)))) {
+            // stateKey가 없으면 세션 만료로 간주 → 잔여 키 정리
+            clear(cartId);
+            throw new CartExpiredException(cartId); // 404/410 등으로 매핑
+        }
     }
 
 
