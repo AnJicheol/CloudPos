@@ -86,3 +86,8 @@ application-*.yaml
 # ===== 기타 YAML 통째로 막기 (필요하면 아래에 !로 예외 추가) =====
 *.yml
 *.yaml
+
+# IntelliJ가 만드는 xml만 막기
+.idea/*.xml
+.idea/**/dataSources/
+.idea/**/httpRequests/
