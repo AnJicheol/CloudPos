@@ -5,25 +5,25 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
-
-@Getter
 @Entity
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Order{
+public class OrderItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "order_id", length = 26, nullable = false, unique = true)
-    private String orderId;
+    @Column(name = "order_item_id", length = 26, nullable = false, unique = true)
+    private String orderItemId;
 
-    @Column(name = "paid_at", nullable = false)
-    private LocalDateTime paidAt;
+    private String productId;
 
+    @Column(nullable = false)
+    private String name;
 
+    @Column(nullable = false)
+    private Integer price;
 
 }
