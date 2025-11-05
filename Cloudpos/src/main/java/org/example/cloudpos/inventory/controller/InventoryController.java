@@ -3,33 +3,30 @@ package org.example.cloudpos.inventory.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.inventory.dto.InventoryCreateRequest;
-import org.example.cloudpos.inventory.dto.InventoryResponse;
+import org.example.cloudpos.inventory.dto.InventoryProductRequest;
+import org.example.cloudpos.inventory.dto.InventoryProductResponse;
 import org.example.cloudpos.inventory.service.InventoryService;
-import org.example.cloudpos.product.domain.ProductStatus;
-import org.example.cloudpos.product.dto.ProductCreateRequest;
-import org.example.cloudpos.product.dto.ProductResponse;
-import org.example.cloudpos.product.dto.ProductUpdateRequest;
-import org.example.cloudpos.product.service.ProductService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 /**
- * 인벤토리(매장) 및 상품(Product) 관련 통합 컨트롤러입니다.
+ * 인벤토리(매장) 관련 REST API 컨트롤러.
  *
- * <p>점주(User)가 자신의 매장을 등록/삭제하고,
- * 본사 상품(Product)을 생성·조회·수정·삭제할 수 있도록 합니다.</p>
+ * <p>매장 생성, 매장별 상품 등록 및 관리 기능을 제공합니다.</p>
  *
- * <pre>
- * Base URL:
- *  - 인벤토리 관련: /api/inventories
- *  - 상품 관련:     /api/inventories/products
- * </pre>
+ * <ul>
+ *     <li>매장 생성</li>
+ *     <li>매장에 상품 추가</li>
+ *     <li>매장 내 상품 조회</li>
+ *     <li>매장 내 상품 삭제</li>
+ * </ul>
  *
- * @author
+ * <p>상품(Product)의 등록, 수정, 삭제는 본사 전용 ProductController에서 담당합니다.</p>
+ *
+ * @author Esther
  * @since 1.0
  */
 @RestController
@@ -38,111 +35,62 @@ import java.net.URI;
 public class InventoryController {
 
     private final InventoryService inventoryService;
-    private final ProductService productService;
-
-    /* ------------------------------------------------------
-       인벤토리(매장) 관련 API
 
     /**
-     * 인벤토리(매장)를 등록합니다.
+     * 신규 매장을 생성합니다.
      *
-     * <p>요청 본문에는 매장명(name)과 연결할 상품 ID(productId)가 포함됩니다.</p>
+     * <p>매장은 ULID를 외부 식별자로 사용하며,
+     * 생성 시 상품은 포함되지 않습니다.</p>
      *
-     * @param req 인벤토리 생성 요청 DTO
-     * @return 생성된 인벤토리 응답 DTO
+     * @param req 매장 생성 요청 DTO
+     * @return 생성된 매장의 ULID
      */
     @PostMapping
-    public ResponseEntity<InventoryResponse> createInventory(@Valid @RequestBody InventoryCreateRequest req) {
-        InventoryResponse body = inventoryService.create(req);
-        return ResponseEntity.created(URI.create("/api/inventories/" + body.inventoryId())).body(body);
+    public ResponseEntity<String> createInventory(@Valid @RequestBody InventoryCreateRequest req) {
+        String inventoryId = inventoryService.create(req);
+        return ResponseEntity.created(URI.create("/api/inventories/" + inventoryId)).body(inventoryId);
     }
 
     /**
-     * 인벤토리(매장)를 삭제합니다.
+     * 매장에 상품을 추가합니다.
      *
-     * <p>ULID를 이용해 인벤토리를 식별하며,
-     * 존재하지 않는 ID를 삭제하려 할 경우 예외가 발생할 수 있습니다.</p>
+     * <p>요청 본문에 추가할 상품의 ID를 포함합니다.</p>
      *
-     * @param inventoryId 삭제할 인벤토리의 외부 식별자(ULID)
-     * @return 본문 없는 {@code 204 No Content} 응답
+     * @param inventoryId 매장의 외부 식별자 (ULID)
+     * @param req 상품 추가 요청 DTO
      */
-    @DeleteMapping("/{inventoryId}")
-    public ResponseEntity<Void> deleteInventory(@PathVariable String inventoryId) {
-        inventoryService.delete(inventoryId);
-        return ResponseEntity.noContent().build();
-    }
-
-    /* ------------------------------------------------------
-       상품(Product) 관련 API (기존 ProductController 이관)
-       ------------------------------------------------------ */
-
-    /**
-     * 신규 상품을 등록합니다.
-     *
-     * <p>{@code productId}는 서버에서 ULID로 자동 생성되며,
-     * 요청 본문에는 상품명, 가격, 상태, 이미지 URL 등을 포함할 수 있습니다.</p>
-     *
-     * @param req 상품 생성 요청 DTO
-     * @return 생성된 상품 정보와 Location 헤더
-     */
-    @PostMapping("/products")
-    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductCreateRequest req) {
-        Long id = productService.create(req);
-        ProductResponse body = productService.get(id);
-        return ResponseEntity.created(URI.create("/api/inventories/products/" + id)).body(body);
+    @PostMapping("/{inventoryId}/products")
+    public ResponseEntity<Void> addProduct(
+            @PathVariable String inventoryId,
+            @Valid @RequestBody InventoryProductRequest req
+    ) {
+        inventoryService.addProduct(inventoryId, req.productId());
+        return ResponseEntity.ok().build();
     }
 
     /**
-     * 상품을 ID로 조회합니다.
+     * 특정 매장에 등록된 상품 목록을 조회합니다.
      *
-     * @param id 상품 기본키 ID
-     * @return 상품 상세 정보
+     * @param inventoryId 매장 외부 식별자 (ULID)
+     * @return 상품 목록
      */
-    @GetMapping("/products/{id}")
-    public ProductResponse getProduct(@PathVariable Long id) {
-        return productService.get(id);
+    @GetMapping("/{inventoryId}/products")
+    public List<InventoryProductResponse> listProducts(@PathVariable String inventoryId) {
+        return inventoryService.listProducts(inventoryId);
     }
 
     /**
-     * 상품 목록을 페이지 단위로 조회합니다.
+     * 매장에서 특정 상품을 제거합니다.
      *
-     * <p>아카이브(ARCHIVED) 상태가 아닌 상품만 반환합니다.</p>
-     *
-     * @param pageable 페이지 요청 정보
-     * @return 상품 목록 페이지
+     * @param inventoryId 매장 외부 식별자 (ULID)
+     * @param productId 상품 기본키 ID
      */
-    @GetMapping("/products")
-    public Page<ProductResponse> listProducts(Pageable pageable) {
-        return productService.list(pageable);
-    }
-
-    /**
-     * 기존 상품 정보를 수정합니다.
-     *
-     * <p>요청 본문에는 수정할 필드만 포함할 수 있으며,
-     * null로 전달된 필드는 변경되지 않습니다.</p>
-     *
-     * @param id 수정할 상품 ID
-     * @param req 수정 요청 DTO
-     * @return 본문 없는 {@code 204 No Content}
-     */
-    @PatchMapping("/products/{id}")
-    public ResponseEntity<Void> updateProduct(@PathVariable Long id, @RequestBody ProductUpdateRequest req) {
-        productService.update(id, req);
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * 상품을 삭제(아카이브 처리)합니다.
-     *
-     * <p>실제 DB에서 삭제하지 않고 상태를 {@link ProductStatus#ARCHIVED}로 변경합니다.</p>
-     *
-     * @param id 상품 기본키 ID
-     * @return 본문 없는 {@code 204 No Content}
-     */
-    @DeleteMapping("/products/{id}")
-    public ResponseEntity<Void> archiveProduct(@PathVariable Long id) {
-        productService.archive(id);
+    @DeleteMapping("/{inventoryId}/products/{productId}")
+    public ResponseEntity<Void> removeProduct(
+            @PathVariable String inventoryId,
+            @PathVariable Long productId
+    ) {
+        inventoryService.removeProduct(inventoryId, productId);
         return ResponseEntity.noContent().build();
     }
 }

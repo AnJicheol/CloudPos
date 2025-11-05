@@ -6,38 +6,37 @@ import lombok.NoArgsConstructor;
 import org.example.cloudpos.product.domain.Product;
 
 /**
- * 인벤토리(매장) 엔티티입니다.
+ * 인벤토리(매장) 엔티티.
  *
- * <p>점주(User)가 보유한 매장을 나타내며,
- * 각 인벤토리는 하나의 상품(Product)을 참조할 수 있습니다.</p>
- *
- * <ul>
- *     <li>product: 본사 상품 참조</li>
- *     <li>inventoryId: ULID 형식의 외부 식별자</li>
- * </ul>
- *
- * @author
- * @since 1.0
+ * <p>매장 단위로 상품을 관리하며,
+ * 한 매장에는 여러 상품이 등록될 수 있고,
+ * 한 상품은 하나의 매장에만 속합니다.</p>
  */
 @Entity
-@Table(name = "inventories")
+@Table(name = "inventories",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"inventory_id", "product_id"})
+        })
 @Getter
 @NoArgsConstructor
 public class Inventory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // 내부 PK
+    private Long id;
 
-    @Column(name = "inventory_id", nullable = false, unique = true, length = 26)
-    private String inventoryId; // ULID
+    /** 매장 외부 식별자 (ULID) */
+    @Column(name = "inventory_id", nullable = false, length = 26)
+    private String inventoryId;
 
+    /** 매장명 */
     @Column(nullable = false, length = 100)
-    private String name; // 매장명 (예: "스타벅스 강남점")
+    private String name;
 
+    /** 본사 상품 참조 (UNIQUE: 동일 상품 중복 등록 불가) */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product; // 본사 상품 참조
+    @JoinColumn(name = "product_id", nullable = false, unique = true)
+    private Product product;
 
     public Inventory(String inventoryId, String name, Product product) {
         this.inventoryId = inventoryId;
