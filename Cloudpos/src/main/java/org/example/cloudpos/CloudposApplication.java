@@ -10,4 +10,5 @@ public class CloudposApplication {
         SpringApplication.run(CloudposApplication.class, args);
     }
 
+
 }
