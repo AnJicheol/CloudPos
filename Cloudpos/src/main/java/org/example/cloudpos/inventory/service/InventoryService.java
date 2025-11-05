@@ -5,9 +5,13 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.inventory.domain.Inventory;
 import org.example.cloudpos.inventory.dto.InventoryCreateRequest;
 import org.example.cloudpos.inventory.dto.InventoryProductResponse;
+import org.example.cloudpos.inventory.exception.DuplicateStoreProductException;
+import org.example.cloudpos.inventory.exception.InventoryNotFoundException;
 import org.example.cloudpos.inventory.repository.InventoryRepository;
 import org.example.cloudpos.product.domain.Product;
+import org.example.cloudpos.product.exception.ProductNotFoundException;
 import org.example.cloudpos.product.repository.ProductRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,29 +48,23 @@ public class InventoryService {
      */
     @Transactional
     public void addProduct(String inventoryId, Long productId) {
-        // 1) 상품 존재 확인
+        // 상품 존재 확인
         Product product = productRepo.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+                .orElseThrow(() -> new ProductNotFoundException(productId));
 
-        // 2) 전역 중복 보호: 이 상품이 이미 다른 매장에 등록되어 있으면 막기
-        if (inventoryRepo.existsByProduct_Id(productId)) {
-            throw new IllegalStateException("해당 상품은 이미 다른 매장에 등록되어 있습니다.");
+        // 매장 존재 확인 (inventoryId 기준)
+        Inventory inventory = inventoryRepo.findFirstByInventoryId(inventoryId)
+                .orElseThrow(() -> new InventoryNotFoundException(inventoryId));
+
+        // 매장 이름 스냅샷 복제해서 INSERT
+        Inventory newRow = new Inventory(inventoryId, inventory.getName(), product);
+        try {
+            inventoryRepo.save(newRow);
+        } catch (DataIntegrityViolationException e) {
+            throw new DuplicateStoreProductException(inventoryId, productId, e);
         }
-
-        // 3) 매장(ULID) 존재 및 이름 확보
-        String name = inventoryRepo.findFirstByInventoryId(inventoryId)
-                .map(Inventory::getName)
-                .orElseThrow(() -> new IllegalArgumentException("해당 매장이 존재하지 않습니다. 먼저 매장을 생성하세요."));
-
-        // 4) 같은 매장에 같은 상품 중복 등록 방지(안전망)
-        if (inventoryRepo.existsByInventoryIdAndProduct_Id(inventoryId, productId)) {
-            throw new IllegalStateException("이미 해당 매장에 등록된 상품입니다.");
-        }
-
-        // 5) 매장-상품 한 줄 INSERT
-        Inventory row = new Inventory(inventoryId, name, product);
-        inventoryRepo.save(row);
     }
+
 
 
 
