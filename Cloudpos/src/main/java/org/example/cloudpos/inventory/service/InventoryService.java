@@ -76,15 +76,15 @@ public class InventoryService {
      */
     @Transactional
     public void addProduct(String inventoryId, Long productId) {
-        // 1️⃣ 상품 존재 확인
+        // 상품 존재 확인
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
-        // 2️⃣ 매장 존재 확인
+        // 매장 존재 확인
         Inventory inventory = inventoryRepo.findFirstByInventoryId(inventoryId)
                 .orElseThrow(() -> new InventoryNotFoundException(inventoryId));
 
-        // 3️⃣ 매장 이름 스냅샷 복제 후 저장
+        // 매장 이름 스냅샷 복제 후 저장
         Inventory newRow = new Inventory(inventoryId, inventory.getName(), product);
         try {
             inventoryRepo.save(newRow);
@@ -106,11 +106,11 @@ public class InventoryService {
      */
     @Transactional(readOnly = true)
     public List<InventoryProductResponse> listProducts(String inventoryId) {
-        // 1️⃣ 매장 존재 검증
+        // 매장 존재 검증
         if (!inventoryRepo.existsByInventoryId(inventoryId)) {
             throw new IllegalArgumentException("해당 매장이 존재하지 않습니다.");
         }
-        // 2️⃣ N+1 방지용 fetch join
+        // N+1 방지용 fetch join
         return inventoryRepo.findAllWithProductByInventoryId(inventoryId).stream()
                 .map(inv -> InventoryProductResponse.from(inv.getProduct()))
                 .toList();
