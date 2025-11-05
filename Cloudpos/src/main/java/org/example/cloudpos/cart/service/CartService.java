@@ -7,6 +7,7 @@ import org.example.cloudpos.cart.dto.ProductCartDto;
 import org.example.cloudpos.cart.exception.CartExpiredException;
 import org.example.cloudpos.cart.fsm.CartEvent;
 import org.example.cloudpos.cart.fsm.CartStateMachine;
+//import org.example.cloudpos.product.dto.ProductSummaryDto;
 import org.example.cloudpos.product.service.ProductService;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -14,16 +15,19 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class CartService {
     private final RedisTemplate<String, String> redisTemplate;
+    private final ProductService productService;
     private static final Duration TTL=Duration.ofMinutes(5);
+
+//    private ProductSummaryDto getProductInfo(String productId) {
+//        // 실제 product 서비스에서 상품 정보를 가져오기
+//        return productService.findSummaryByProductId(productId);
+//    }
 
     private String itemsKey(String cartId) { return "cart:" + cartId + ":items"; }          // List: [productId,...]
     private String itemSetKey(String cartId) { return "cart:" + cartId + ":itemset"; }
@@ -43,7 +47,9 @@ public class CartService {
 
 
     public boolean addFirstTime(String cartId, String productId) {
+        ensureAlive(cartId);
         createCart(cartId);
+
         Long added = redisTemplate.opsForSet().add(itemSetKey(cartId), productId);
         if(added != null && added == 1L){
             redisTemplate.opsForList().rightPush(itemsKey(cartId), productId);
@@ -60,6 +66,8 @@ public class CartService {
 
 
     public boolean addOne(String cartId, String productId) {
+
+        ensureAlive(cartId);
         redisTemplate.opsForValue().increment(qtyKey(cartId, productId));
 
         transition(cartId, CartEvent.ADD_ITEM);
@@ -69,6 +77,7 @@ public class CartService {
     }
 
     public boolean removeOne(String cartId, String productId) {
+        ensureAlive(cartId);
         int cur=getQuantity(cartId, productId);
         if(cur<=1) return false;
         redisTemplate.opsForValue().decrement(qtyKey(cartId, productId));
@@ -78,6 +87,7 @@ public class CartService {
     }
 
     public boolean removeItem(String cartId, String productId) {
+        ensureAlive(cartId);
         redisTemplate.delete(qtyKey(cartId, productId));
         redisTemplate.opsForSet().remove(itemSetKey(cartId), productId);
         redisTemplate.opsForList().remove(itemsKey(cartId),0,productId);
@@ -86,15 +96,20 @@ public class CartService {
     }
 
     public List<CartItemDto> getAll(String cartId) {
+        ensureAlive(cartId);
+
+        // 1) 장바구니 상품 id 순서
         List<String> ids = redisTemplate.opsForList().range(itemsKey(cartId), 0, -1);
         if (ids == null || ids.isEmpty()) return List.of();
 
-        List<String> qtyKeys = ids.stream()
-                .map(pid -> qtyKey(cartId, pid))
-                .toList();
-
+        // 2) 수량 일괄 조회 (multiGet)
+        List<String> qtyKeys = ids.stream().map(pid -> qtyKey(cartId, pid)).toList();
         List<String> quantities = redisTemplate.opsForValue().multiGet(qtyKeys);
 
+        // 3) ✅ 상품 정보 배치 조회
+        Map<String, ProductSummaryDto> productMap = productService.findCartViewByProductIds(new HashSet<>(ids));
+
+        // 4) 순서 보존하여 묶기
         List<CartItemDto> result = new ArrayList<>(ids.size());
         for (int i = 0; i < ids.size(); i++) {
             String pid = ids.get(i);
@@ -102,7 +117,11 @@ public class CartService {
             int qty = (qStr == null) ? 0 : Integer.parseInt(qStr);
             if (qty < 1) continue;
 
-            ProductCartDto p = getProductInfo(pid);
+            ProductCartDto p = productMap.get(pid);
+            if (p == null) {
+                // 정책: 상품이 삭제되었거나 비공개면 스킵 or placeholder
+                continue; // 또는 placeholder DTO 채우기
+            }
             result.add(new CartItemDto(p, qty));
         }
         return result;
