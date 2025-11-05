@@ -89,12 +89,10 @@ public class CartService {
         List<String> ids = redisTemplate.opsForList().range(itemsKey(cartId), 0, -1);
         if (ids == null || ids.isEmpty()) return List.of();
 
-        // 1) qty 키들을 미리 만들어두고
         List<String> qtyKeys = ids.stream()
                 .map(pid -> qtyKey(cartId, pid))
                 .toList();
 
-        // 2) 한번에 가져오기 (문자열로 바로 받음)
         List<String> quantities = redisTemplate.opsForValue().multiGet(qtyKeys);
 
         List<CartItemDto> result = new ArrayList<>(ids.size());
