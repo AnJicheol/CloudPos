@@ -41,7 +41,7 @@ public class PaymentDiscount {
     @JoinColumn(name = "discount_policy_id")
     private DiscountPolicy discountPolicy; // 할인 정책 참조
 
-    private BigDecimal discountAmount; // 실제 할인 금액
+    private int discountAmount; // 실제 할인 금액
     private LocalDateTime createdAt;
 
     @PrePersist

@@ -2,6 +2,7 @@ package org.example.cloudpos.payment.domain;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -36,7 +37,7 @@ public class DiscountPolicy {
     @Column(name = "type")
     private DiscountType discountType; // 퍼센트 or 금액
 
-    private BigDecimal value; // 할인 값
+    private int value; // 할인 값
 
     @Column(name = "is_active")
     private Boolean isActive;  // 정책 활성 여부
@@ -52,6 +53,17 @@ public class DiscountPolicy {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Builder
+    public DiscountPolicy(String name, DiscountType discountType, int value, Boolean isActive,
+                          LocalDateTime validFrom, LocalDateTime validTo) {
+        this.name = name;
+        this.discountType = discountType;
+        this.value = value;
+        this.isActive = isActive;
+        this.validFrom = validFrom;
+        this.validTo = validTo;
+    }
 
     @PrePersist
     public void prePersist() {
