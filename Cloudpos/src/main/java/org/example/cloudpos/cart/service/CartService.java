@@ -3,17 +3,13 @@ package org.example.cloudpos.cart.service;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.cart.domain.CartState;
 import org.example.cloudpos.cart.dto.CartItemDto;
-import org.example.cloudpos.cart.dto.ProductCartDto;
 import org.example.cloudpos.cart.exception.CartExpiredException;
 import org.example.cloudpos.cart.fsm.CartEvent;
-import org.example.cloudpos.cart.fsm.CartStateMachine;
-//import org.example.cloudpos.product.dto.ProductSummaryDto;
+import org.example.cloudpos.product.dto.ProductSummaryDto;
 import org.example.cloudpos.product.service.ProductService;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 
@@ -24,16 +20,40 @@ public class CartService {
     private final ProductService productService;
     private static final Duration TTL=Duration.ofMinutes(5);
 
-//    private ProductSummaryDto getProductInfo(String productId) {
-//        // 실제 product 서비스에서 상품 정보를 가져오기
-//        return productService.findSummaryByProductId(productId);
-//    }
-
     private String itemsKey(String cartId) { return "cart:" + cartId + ":items"; }          // List: [productId,...]
     private String itemSetKey(String cartId) { return "cart:" + cartId + ":itemset"; }
     private String qtyKey(String cartId, String productId) { return "cart:" + cartId + ":qty:" + productId; } // String: "3"
     private String stateKey(String cartId) { return "cart:" + cartId + ":state"; }
 
+    private static final EnumMap<CartState, EnumMap<CartEvent, CartState>> TRANSITIONS = new EnumMap<>(CartState.class);
+    static {
+        // EMPTY
+        var empty = new EnumMap<CartEvent, CartState>(CartEvent.class);
+        empty.put(CartEvent.ADD_ITEM, CartState.IN_PROGRESS);
+        TRANSITIONS.put(CartState.EMPTY, empty);
+
+        // IN_PROGRESS
+        var inProgress = new EnumMap<CartEvent, CartState>(CartEvent.class);
+        inProgress.put(CartEvent.ADD_ITEM, CartState.IN_PROGRESS);
+        inProgress.put(CartEvent.REMOVE_ITEM, CartState.IN_PROGRESS); // 실수량 0 → EMPTY는 후처리
+        inProgress.put(CartEvent.CHECKOUT, CartState.CHECKOUT_PENDING);
+        TRANSITIONS.put(CartState.IN_PROGRESS, inProgress);
+
+        // CHECKOUT_PENDING
+        var checkout = new EnumMap<CartEvent, CartState>(CartEvent.class);
+        checkout.put(CartEvent.PAYMENT_SUCCESS, CartState.CLOSED);
+        checkout.put(CartEvent.CANCEL, CartState.IN_PROGRESS);
+        TRANSITIONS.put(CartState.CHECKOUT_PENDING, checkout);
+
+        // CLOSED(종단)
+        TRANSITIONS.put(CartState.CLOSED, new EnumMap<>(CartEvent.class));
+    }
+
+    private Optional<CartState> nextStateOpt(CartState cur, CartEvent event) {
+        var byEvent = TRANSITIONS.get(cur);
+        if (byEvent == null) return Optional.empty();
+        return Optional.ofNullable(byEvent.get(event));
+    }
 
     public boolean createCart(String cartId) {
         redisTemplate.opsForValue().setIfAbsent(stateKey(cartId), CartState.EMPTY.name(), TTL);
@@ -48,8 +68,10 @@ public class CartService {
 
     public boolean addFirstTime(String cartId, String productId) {
         ensureAlive(cartId);
-        createCart(cartId);
-
+        var s = getState(cartId);
+        if (s == CartState.CHECKOUT_PENDING || s == CartState.CLOSED) {
+            throw new IllegalStateException("현재 상태에서는 장바구니를 수정할 수 없습니다: " + s);
+        }
         Long added = redisTemplate.opsForSet().add(itemSetKey(cartId), productId);
         if(added != null && added == 1L){
             redisTemplate.opsForList().rightPush(itemsKey(cartId), productId);
@@ -68,6 +90,12 @@ public class CartService {
     public boolean addOne(String cartId, String productId) {
 
         ensureAlive(cartId);
+
+        var s = getState(cartId);
+        if (s == CartState.CHECKOUT_PENDING || s == CartState.CLOSED) {
+            throw new IllegalStateException("현재 상태에서는 장바구니를 수정할 수 없습니다: " + s);
+        }
+
         redisTemplate.opsForValue().increment(qtyKey(cartId, productId));
 
         transition(cartId, CartEvent.ADD_ITEM);
@@ -78,6 +106,12 @@ public class CartService {
 
     public boolean removeOne(String cartId, String productId) {
         ensureAlive(cartId);
+
+        var s = getState(cartId);
+        if (s == CartState.CHECKOUT_PENDING || s == CartState.CLOSED) {
+            throw new IllegalStateException("현재 상태에서는 장바구니를 수정할 수 없습니다: " + s);
+        }
+
         int cur=getQuantity(cartId, productId);
         if(cur<=1) return false;
         redisTemplate.opsForValue().decrement(qtyKey(cartId, productId));
@@ -88,6 +122,11 @@ public class CartService {
 
     public boolean removeItem(String cartId, String productId) {
         ensureAlive(cartId);
+        var s = getState(cartId);
+        if (s == CartState.CHECKOUT_PENDING || s == CartState.CLOSED) {
+            throw new IllegalStateException("현재 상태에서는 장바구니를 수정할 수 없습니다: " + s);
+        }
+
         redisTemplate.delete(qtyKey(cartId, productId));
         redisTemplate.opsForSet().remove(itemSetKey(cartId), productId);
         redisTemplate.opsForList().remove(itemsKey(cartId),0,productId);
@@ -98,18 +137,12 @@ public class CartService {
     public List<CartItemDto> getAll(String cartId) {
         ensureAlive(cartId);
 
-        // 1) 장바구니 상품 id 순서
         List<String> ids = redisTemplate.opsForList().range(itemsKey(cartId), 0, -1);
         if (ids == null || ids.isEmpty()) return List.of();
 
-        // 2) 수량 일괄 조회 (multiGet)
         List<String> qtyKeys = ids.stream().map(pid -> qtyKey(cartId, pid)).toList();
         List<String> quantities = redisTemplate.opsForValue().multiGet(qtyKeys);
 
-        // 3) ✅ 상품 정보 배치 조회
-        Map<String, ProductSummaryDto> productMap = productService.findCartViewByProductIds(new HashSet<>(ids));
-
-        // 4) 순서 보존하여 묶기
         List<CartItemDto> result = new ArrayList<>(ids.size());
         for (int i = 0; i < ids.size(); i++) {
             String pid = ids.get(i);
@@ -117,26 +150,51 @@ public class CartService {
             int qty = (qStr == null) ? 0 : Integer.parseInt(qStr);
             if (qty < 1) continue;
 
-            ProductCartDto p = productMap.get(pid);
+            ProductSummaryDto p = productService.findSummaryByProductId(pid);
             if (p == null) {
-                // 정책: 상품이 삭제되었거나 비공개면 스킵 or placeholder
-                continue; // 또는 placeholder DTO 채우기
+                continue;
             }
             result.add(new CartItemDto(p, qty));
         }
         return result;
     }
 
+    public void beginCheckout(String cartId) {
+        ensureAlive(cartId);
+        List<String> ids=redisTemplate.opsForList().range(itemsKey(cartId), 0, -1);
+        if(ids == null || ids.isEmpty()) {
+            throw new IllegalStateException("빈 장바구니는 결제를 시작 할 수 없음");
+        }
+        transition(cartId, CartEvent.CHECKOUT);
+
+    }
+
+    public void paymentSuccess(String cartId) {
+        ensureAlive(cartId);
+        if (getState(cartId) != CartState.CHECKOUT_PENDING) {
+            throw new IllegalStateException("결제 성공은 CHECKOUT_PENDING에서만 가능합니다.");
+        }
+        transition(cartId, CartEvent.PAYMENT_SUCCESS);
+        clear(cartId);
+
+    }
+
+    public void cancelCheckout(String cartId) {
+        ensureAlive(cartId);
+        if(getState(cartId) != CartState.CHECKOUT_PENDING) {
+            throw new IllegalStateException("결제 취소는 CHECKOUT_PENDING에서만 가능합니다.");
+        }
+        transition(cartId, CartEvent.CANCEL);
+    }
+
     public void clear(String cartId) {
         Set<String> pids = redisTemplate.opsForSet().members(itemSetKey(cartId));
 
-        // 2) qty:* 일괄 삭제
         if (pids != null && !pids.isEmpty()) {
             List<String> qtyKeys = pids.stream()
                     .map(pid -> qtyKey(cartId, pid))
-                    .toList(); // Java 16+ (Java 21이면 OK)
+                    .toList();
 
-            // 여러 키 한 번에 삭제 (호출 1번)
             redisTemplate.delete(qtyKeys);
         }
         redisTemplate.delete(itemSetKey(cartId));
@@ -154,10 +212,10 @@ public class CartService {
     }
 
 
-//상태전이, ttl 동기화?
+    //상태전이, ttl 동기화?
     private void transition(String cartId, CartEvent event) {
-        CartState cur=getState(cartId);
-        CartState next=CartStateMachine.next(cur, event).orElse(cur);
+        CartState cur = getState(cartId);
+        CartState next = nextStateOpt(cur, event).orElse(cur);
         redisTemplate.opsForValue().set(stateKey(cartId), next.name(), TTL);
         redisTemplate.expire(itemsKey(cartId), TTL);
         redisTemplate.expire(itemSetKey(cartId), TTL);

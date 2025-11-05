@@ -4,7 +4,7 @@ public enum CartEvent {
     ADD_ITEM,
     REMOVE_ITEM,
     PAYMENT_SUCCESS,
-    CHECKOUT,
-    EXPIRE
+    CANCEL,
+    CHECKOUT
 
 }
