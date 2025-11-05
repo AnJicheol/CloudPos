@@ -5,7 +5,7 @@ package org.example.cloudpos.product.dto;
  *
  * <p>상품 목록 조회 시, 핵심 정보(productId, name, price, imageUrl)만 반환할 때 사용됩니다.</p>
  */
-public record ProductSummary(
+public record ProductSummaryDto(
         String productId,
         String name,
         int price

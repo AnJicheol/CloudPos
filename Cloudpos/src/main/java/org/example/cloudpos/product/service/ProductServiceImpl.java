@@ -6,6 +6,7 @@ import org.example.cloudpos.product.domain.ProductStatus;
 import org.example.cloudpos.product.domain.Product;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
+import org.example.cloudpos.product.dto.ProductSummaryDto;
 import org.example.cloudpos.product.dto.ProductUpdateRequest;
 import org.example.cloudpos.product.exception.ProductNotFoundException;
 import org.example.cloudpos.product.repository.ProductRepository;
@@ -143,5 +144,16 @@ public class ProductServiceImpl implements ProductService {
         if (req.imageUrl() != null) {
             p.setImageUrl(req.imageUrl());
         }
+    }
+
+    @Override
+    public ProductSummaryDto findSummaryByProductId(String productId) {
+        Product p = repo.findByProductId(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+        return new ProductSummaryDto(
+                p.getProductId(),
+                p.getName(),
+                p.getPrice()
+        );
     }
 }

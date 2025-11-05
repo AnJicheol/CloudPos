@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 /**
  * 상품 엔티티에 대한 데이터 접근을 담당하는 JPA 리포지토리 인터페이스입니다.
  *
@@ -42,4 +44,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @return 조건에 해당하는 상품 목록 페이지 객체
      */
     Page<Product> findByStatusNot(ProductStatus status, Pageable pageable);
+
+    Optional<Product> findByProductId(String productId);
+
 }

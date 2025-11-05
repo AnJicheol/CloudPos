@@ -6,6 +6,8 @@ import org.example.cloudpos.product.dto.ProductResponse;
 import org.example.cloudpos.product.dto.ProductUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.example.cloudpos.product.dto.ProductSummaryDto;
+
 
 /**
  * 상품 도메인의 비즈니스 로직을 정의하는 서비스 인터페이스입니다.
@@ -78,4 +80,6 @@ public interface ProductService {
      * @throws org.example.cloudpos.product.exception.ProductNotFoundException 수정 대상이 존재하지 않을 경우
      */
     void update(Long id, ProductUpdateRequest req);
+
+    ProductSummaryDto findSummaryByProductId(String productId);
 }
