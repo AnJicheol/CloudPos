@@ -1,9 +1,7 @@
 package org.example.cloudpos.payment.domain;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,8 +31,8 @@ public class Payment {
 
     private Long orderId; // 주문과 관련된 엔티티로 추후에 연관관계 매핑예정
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_method_id")
     private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
@@ -42,13 +40,21 @@ public class Payment {
     private PaymentStatus paymentStatus;
 
     @Column(name = "amount_final")
-    private BigDecimal amountFinal;
+    private int amountFinal;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Builder
+    public Payment(Long orderId, PaymentMethod paymentMethod, PaymentStatus paymentStatus, int amountFinal) {
+        this.orderId = orderId;
+        this.paymentMethod = paymentMethod;
+        this.paymentStatus = paymentStatus;
+        this.amountFinal = amountFinal;
+    }
 
     @PrePersist
     public void prePersist() {
