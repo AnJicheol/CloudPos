@@ -24,6 +24,6 @@ public class Order{
     @Column(name = "paid_at", nullable = false)
     private LocalDateTime paidAt;
 
-
-
+    @Column(name = "order_item_id", length = 26, nullable = false, unique = true)
+    private String orderItemId;
 }
