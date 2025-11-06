@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 /**
  * 상품 엔티티에 대한 데이터 접근을 담당하는 JPA 리포지토리 인터페이스입니다.
  *
@@ -56,5 +58,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByNameContainingIgnoreCaseAndStatusNot(
             String name, ProductStatus status, Pageable pageable
     );
+
+    /**
+     * 상품 식별자({@code productId})로 상품을 조회합니다.
+     *
+     * <p>조회 결과가 존재하지 않을 경우 {@link Optional#empty()}를 반환합니다.</p>
+     *
+     * @param productId 조회할 상품의 식별자
+     * @return 조회된 상품 엔티티 또는 존재하지 않을 경우 빈 {@link Optional}
+     */
+    Optional<Product> findByProductId(String productId);
+
 
 }

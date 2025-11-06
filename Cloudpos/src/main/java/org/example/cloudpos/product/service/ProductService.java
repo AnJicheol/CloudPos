@@ -3,6 +3,7 @@ package org.example.cloudpos.product.service;
 import org.example.cloudpos.product.domain.ProductStatus;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
+import org.example.cloudpos.product.dto.ProductSummaryDto;
 import org.example.cloudpos.product.dto.ProductUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -89,5 +90,15 @@ public interface ProductService {
      * @return 검색된 상품 목록 페이지
      */
     Page<ProductResponse> searchByName(String name, Pageable pageable);
+
+    /**
+     * 상품 식별자({@code productId})로 상품의 요약 정보를 조회합니다.
+     *
+     * @param productId 조회할 상품의 식별자
+     * @return 상품의 요약 정보 DTO
+     * @throws ProductNotFoundException 지정된 {@code productId}에 해당하는 상품이 존재하지 않는 경우
+     */
+    ProductSummaryDto findSummaryByProductId(String productId);
+
 
 }
