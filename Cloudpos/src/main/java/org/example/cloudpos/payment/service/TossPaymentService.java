@@ -12,6 +12,7 @@ import org.example.cloudpos.payment.repository.TossPaymentRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -32,6 +33,7 @@ import java.util.Base64;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class TossPaymentService {
 
     @Value("${toss.base-url}")
@@ -40,11 +42,12 @@ public class TossPaymentService {
     @Value("${toss.secret-key}")
     private String secretKey;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
     private final TossPaymentRepository tossPaymentRepository;
     private final PaymentRepository paymentRepository;
 
     //토스 결제 승인 요청
+    @Transactional
     public TossPaymentResponse confirmPayment(TossPaymentRequest request) {
         log.info("[TOSS 결제 승인 요청] paymentKey={}, orderId={}, amount={}",
                 request.getPaymentKey(), request.getOrderId(), request.getAmount());
