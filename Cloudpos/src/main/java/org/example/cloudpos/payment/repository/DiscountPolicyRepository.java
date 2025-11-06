@@ -3,6 +3,9 @@ package org.example.cloudpos.payment.repository;
 import org.example.cloudpos.payment.domain.DiscountPolicy;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
 /**
  * DiscountPolicyRepository
  *
@@ -15,4 +18,13 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface DiscountPolicyRepository extends JpaRepository<DiscountPolicy, Long> {
+
+    // 활성화된 정책만 조회
+    List<DiscountPolicy> findByIsActiveTrue();
+
+    // 특정 기간 내 유효한 정책 조회
+    List<DiscountPolicy> findByIsActiveTrueAndValidFromBeforeAndValidToAfter(
+            java.time.LocalDateTime now1, java.time.LocalDateTime now2
+    );
+
 }
