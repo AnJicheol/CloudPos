@@ -213,4 +213,26 @@ public class InventoryController {
         productService.archive(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * 상품명을 기준으로 상품을 검색합니다.
+     *
+     * <p>대소문자를 구분하지 않으며,
+     * {@code ARCHIVED} 상태의 상품은 제외됩니다.</p>
+     *
+     * @param name 검색할 상품명 (부분 일치 가능)
+     * @param pageable 페이지 요청 정보
+     * @return 검색된 상품 목록 페이지
+     * @status 200 OK
+     */
+    @GetMapping("/api/products/search")
+    public Page<ProductResponse> searchByName(
+            @RequestParam("name") String name,
+            Pageable pageable
+    ) {
+        return productService.searchByName(name, pageable);
+    }
+
+
+
 }

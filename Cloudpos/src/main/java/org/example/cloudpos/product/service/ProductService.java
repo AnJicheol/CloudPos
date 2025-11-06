@@ -78,4 +78,16 @@ public interface ProductService {
      * @throws org.example.cloudpos.product.exception.ProductNotFoundException 수정 대상이 존재하지 않을 경우
      */
     void update(Long id, ProductUpdateRequest req);
+
+    /**
+     * 상품명을 기준으로 상품을 검색합니다.
+     *
+     * <p>대소문자를 구분하지 않으며, {@code ARCHIVED} 상태의 상품은 제외됩니다.</p>
+     *
+     * @param name 검색할 상품명 (부분 일치 가능)
+     * @param pageable 페이지 요청 정보
+     * @return 검색된 상품 목록 페이지
+     */
+    Page<ProductResponse> searchByName(String name, Pageable pageable);
+
 }

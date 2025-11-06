@@ -144,4 +144,37 @@ public class ProductServiceImpl implements ProductService {
             p.setImageUrl(req.imageUrl());
         }
     }
+
+    /**
+     * 상품명을 기준으로 상품을 검색합니다.
+     *
+     * <p>입력된 {@code name}이 {@code null} 또는 공백일 경우 빈 문자열로 처리하며,
+     * {@link ProductStatus#ARCHIVED} 상태(아카이브된 상품)는 검색 결과에서 제외합니다.</p>
+     *
+     * <p>검색 결과는 {@link ProductResponse}로 매핑되어
+     * 페이지 단위로 반환됩니다.</p>
+     *
+     * @param name 검색할 상품명 (부분 일치, 대소문자 무시)
+     * @param pageable 페이지 요청 정보
+     * @return 검색된 상품 목록 페이지
+     * @since 1.0
+     */
+    @Override
+    public Page<ProductResponse> searchByName(String name, Pageable pageable) {
+        String keyword = name == null ? "" : name.trim();
+
+        return repo.findByNameContainingIgnoreCaseAndStatusNot(
+                        keyword, ProductStatus.ARCHIVED, pageable)
+                .map(p ->
+                        new ProductResponse(
+                                p.getId(),
+                                p.getProductId(),
+                                p.getName(),
+                                p.getPrice(),
+                                p.getStatus(),
+                                p.getImageUrl()
+                        )
+                );
+    }
+
 }

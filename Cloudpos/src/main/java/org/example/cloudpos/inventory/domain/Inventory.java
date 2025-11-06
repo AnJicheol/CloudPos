@@ -66,7 +66,7 @@ public class Inventory {
      * 동일 상품의 중복 등록을 방지하기 위해 {@code unique = true} 제약이 적용됩니다.</p>
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false, unique = true)
+    @JoinColumn(name = "product_id", nullable = true, unique = true)
     private Product product;
 
     /**

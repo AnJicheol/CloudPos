@@ -42,4 +42,19 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @return 조건에 해당하는 상품 목록 페이지 객체
      */
     Page<Product> findByStatusNot(ProductStatus status, Pageable pageable);
+
+    /**
+     * 상품명을 기준으로 부분 일치 검색을 수행합니다.
+     *
+     * <p>대소문자를 구분하지 않으며, 지정된 상태({@code status})가 아닌 상품만 조회합니다.</p>
+     *
+     * @param name 검색할 상품명 (부분 일치, 대소문자 무시)
+     * @param status 제외할 상품 상태 (예: {@code ARCHIVED})
+     * @param pageable 페이지 요청 정보
+     * @return 검색 결과 상품 목록 페이지
+     */
+    Page<Product> findByNameContainingIgnoreCaseAndStatusNot(
+            String name, ProductStatus status, Pageable pageable
+    );
+
 }
