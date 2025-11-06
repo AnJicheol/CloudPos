@@ -2,6 +2,7 @@ package org.example.cloudpos.payment.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.cloudpos.order.Order;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -29,7 +30,12 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long orderId; // 주문과 관련된 엔티티로 추후에 연관관계 매핑예정
+    @Column(name = "paymentId")
+    private String paymentId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id" ,referencedColumnName = "order_id")
+    private Order orderId; // 주문과 관련된 엔티티로 추후에 연관관계 매핑예정
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_method_id")

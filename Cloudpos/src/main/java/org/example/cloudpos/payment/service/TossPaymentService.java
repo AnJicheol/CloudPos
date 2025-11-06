@@ -75,13 +75,18 @@ public class TossPaymentService {
                 throw new RuntimeException("Toss 결제 승인 응답이 비어있습니다.");
             }
 
-            log.info("[TOSS 결제 승인 성공] paymentKey={}, status={}",
-                    body.getPaymentKey(), body.getStatus());
+            log.info("[TOSS 결제 승인 성공] paymentKey={}, status={}, totalAmount={}",
+                    body.getPaymentKey(), body.getStatus(), body.getTotalAmount());
 
+
+            // 오더아이디 롱으로 변환
+            Long orderId = extractOrderId(body.getOrderId());
+            log.info("[Order ID 변환 완료] 외부 orderId={}, 내부 orderId(Long)={}",
+                    body.getOrderId(), orderId);
 
             //  Payment 조회
-            Payment payment = paymentRepository.findByOrderId(body.getOrderId())
-                    .orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다."));
+            Payment payment = paymentRepository.findByOrderId(orderId)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다. orderId=" + orderId));
 
             //  TossPayment 엔티티 생성 및 저장
             TossPayment tossPayment = TossPayment.builder()
@@ -107,6 +112,21 @@ public class TossPaymentService {
         } catch (Exception e) {
             log.error("[서버 내부 오류] {}", e.getMessage(), e);
             throw new RuntimeException("서버 내부 오류 발생: " + e.getMessage());
+        }
+    }
+
+    //토스아이디(String) -> Long으로 변환
+    private Long extractOrderId(String tossOrderId) {
+        if (tossOrderId == null || tossOrderId.isBlank()) {
+            throw new IllegalArgumentException("Toss 결제 응답의 orderId가 비어 있습니다.");
+        }
+
+        try {
+            // "order_42" 또는 "ORD-42" 형태에서도 숫자만 추출
+            String numericPart = tossOrderId.replaceAll("[^0-9]", "");
+            return Long.valueOf(numericPart);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("orderId 변환 실패: " + tossOrderId);
         }
     }
 }
