@@ -7,6 +7,13 @@ import org.example.cloudpos.cart.service.CartService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+/**
+
+ * 장바구니 결제 프로세스를 처리하는 서비스입니다.
+ *
+ * <p>결제 시작, 성공, 취소에 따른 상태 전이를 {@link CartService}를 통해 수행합니다.</p>
+
+ */
 
 @Service
 @RequiredArgsConstructor
