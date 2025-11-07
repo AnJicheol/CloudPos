@@ -17,7 +17,6 @@ package org.example.cloudpos.cart.fsm;
 
  {@link org.example.cloudpos.cart.service.CartService}에서 FSM 전이 로직으로 처리됩니다.
  </p>
-
  */
 public enum CartEvent {
     ADD_ITEM,
