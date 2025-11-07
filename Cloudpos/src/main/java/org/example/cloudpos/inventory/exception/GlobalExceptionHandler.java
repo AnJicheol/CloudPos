@@ -1,12 +1,17 @@
 package org.example.cloudpos.global.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.example.cloudpos.product.exception.ProductNotFoundException;
 import org.example.cloudpos.inventory.exception.InventoryNotFoundException;
 import org.example.cloudpos.inventory.exception.DuplicateStoreProductException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.OffsetDateTime;
+import java.util.Map;
 
 /**
  * 애플리케이션 전역 예외 처리기(Global Exception Handler).
@@ -71,4 +76,30 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleDuplicateStoreProduct(DuplicateStoreProductException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
     }
+
+    /**
+     * {@link IllegalArgumentException} 발생 시 처리하는 예외 핸들러입니다.
+     *
+     * <p>잘못된 요청 파라미터나 비즈니스 로직 검증 실패 등으로 인해
+     * {@code IllegalArgumentException}이 발생하면,
+     * HTTP 400(Bad Request) 상태 코드와 함께 에러 정보를 JSON 형태로 반환합니다.</p>
+     *
+     * @param e   발생한 {@code IllegalArgumentException} 인스턴스
+     * @param req 요청 객체 (에러가 발생한 요청 경로 확인용)
+     * @return 에러 상세 정보(JSON): {@code timestamp}, {@code status}, {@code error},
+     *         {@code message}, {@code path} 포함
+     * @status 400 Bad Request
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, Object> handleIllegalArgument(IllegalArgumentException e, HttpServletRequest req) {
+        return Map.of(
+                "timestamp", OffsetDateTime.now().toString(),
+                "status", 400,
+                "error", "Bad Request",
+                "message", e.getMessage(),
+                "path", req.getRequestURI()
+        );
+    }
+
 }
