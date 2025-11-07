@@ -14,7 +14,7 @@ package org.example.cloudpos.cart.fsm;
  <p><b>비고</b><br>
 
  각 이벤트는 {@link org.example.cloudpos.cart.domain.CartState}의 상태 전이 표에 따라 동작하며,
-
+ 
  {@link org.example.cloudpos.cart.service.CartService}에서 FSM 전이 로직으로 처리됩니다.
  </p>
  */
