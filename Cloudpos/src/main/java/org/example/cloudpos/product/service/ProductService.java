@@ -3,6 +3,7 @@ package org.example.cloudpos.product.service;
 import org.example.cloudpos.product.domain.ProductStatus;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
+import org.example.cloudpos.product.dto.ProductSummaryDto;
 import org.example.cloudpos.product.dto.ProductUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -78,4 +79,26 @@ public interface ProductService {
      * @throws org.example.cloudpos.product.exception.ProductNotFoundException 수정 대상이 존재하지 않을 경우
      */
     void update(Long id, ProductUpdateRequest req);
+
+    /**
+     * 상품명을 기준으로 상품을 검색합니다.
+     *
+     * <p>대소문자를 구분하지 않으며, {@code ARCHIVED} 상태의 상품은 제외됩니다.</p>
+     *
+     * @param name 검색할 상품명 (부분 일치 가능)
+     * @param pageable 페이지 요청 정보
+     * @return 검색된 상품 목록 페이지
+     */
+    Page<ProductResponse> searchByName(String name, Pageable pageable);
+
+    /**
+     * 상품 식별자({@code productId})로 상품의 요약 정보를 조회합니다.
+     *
+     * @param productId 조회할 상품의 식별자
+     * @return 상품의 요약 정보 DTO
+     * @throws ProductNotFoundException 지정된 {@code productId}에 해당하는 상품이 존재하지 않는 경우
+     */
+    ProductSummaryDto findSummaryByProductId(String productId);
+
+
 }
