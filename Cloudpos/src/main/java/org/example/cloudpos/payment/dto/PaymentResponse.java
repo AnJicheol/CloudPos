@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class PaymentResponse {
 
     private Long id;
-    private Long orderId;
+    private String orderId;
     private int amountFinal;
     private String methodName;
     private PaymentStatus status;
@@ -29,7 +29,7 @@ public class PaymentResponse {
     public static PaymentResponse from(Payment payment) {
         return PaymentResponse.builder()
                 .id(payment.getId())
-                .orderId(payment.getOrderId())
+                .orderId(payment.getOrder().getOrderId())
                 .amountFinal(payment.getAmountFinal())
                 .methodName(payment.getPaymentMethod().getName())
                 .status(payment.getPaymentStatus())

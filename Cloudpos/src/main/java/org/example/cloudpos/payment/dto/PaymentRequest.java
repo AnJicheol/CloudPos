@@ -17,10 +17,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PaymentRequest {
 
-    private Long orderId; //결제한 주문 ID
+    private String orderId; //결제한 주문 ID
     private Long paymentMethodId; //결제 수단
 
-    public PaymentRequest(Long orderId, Long paymentMethodId) {
+    public PaymentRequest(String orderId, Long paymentMethodId) {
         this.orderId = orderId;
         this.paymentMethodId = paymentMethodId;
     }

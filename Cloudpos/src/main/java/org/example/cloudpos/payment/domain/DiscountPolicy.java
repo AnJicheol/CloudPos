@@ -75,4 +75,25 @@ public class DiscountPolicy {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+
+    //업데이트를 위한 메서드
+    public void update(String name, DiscountType discountType, int value, Boolean isActive,
+                       LocalDateTime validFrom, LocalDateTime validTo) {
+        this.name = name;
+        this.discountType = discountType;
+        this.value = value;
+        this.isActive = isActive;
+        this.validFrom = validFrom;
+        this.validTo = validTo;
+    }
+
+    public void deactivate() {
+        this.isActive = false;
+    }
+
+    public void activate() {
+        this.isActive = true;
+    }
+
 }

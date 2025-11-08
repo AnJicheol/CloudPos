@@ -70,18 +70,17 @@ public class DiscountPolicyService {
     @Transactional
     public DiscountPolicyResponse updatePolicy(Long id, DiscountPolicyRequest request) {
         DiscountPolicy policy = discountPolicyRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("할인 정책을 찾을 수 없습니다. id=" + id));
+                .orElseThrow(()->new IllegalArgumentException("할인 정책을 찾을수 없습니다"));
 
-        policy = DiscountPolicy.builder()
-                .name(request.getName())
-                .discountType(request.getDiscountType())
-                .value(request.getValue())
-                .isActive(request.getIsActive())
-                .validFrom(request.getValidFrom())
-                .validTo(request.getValidTo())
-                .build();
+        policy.update(
+                request.getName(),
+                request.getDiscountType(),
+                request.getValue(),
+                request.getIsActive(),
+                request.getValidFrom(),
+                request.getValidTo()
+        );
 
-        discountPolicyRepository.save(policy);
         log.info("[할인 정책 수정] id={}, name={}", id, request.getName());
 
         return DiscountPolicyResponse.from(policy);
@@ -93,16 +92,7 @@ public class DiscountPolicyService {
         DiscountPolicy policy = discountPolicyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("할인 정책을 찾을 수 없습니다. id=" + id));
 
-        policy = DiscountPolicy.builder()
-                .name(policy.getName())
-                .discountType(policy.getDiscountType())
-                .value(policy.getValue())
-                .isActive(false)
-                .validFrom(policy.getValidFrom())
-                .validTo(policy.getValidTo())
-                .build();
-
-        discountPolicyRepository.save(policy);
+        policy.deactivate();
         log.info("[할인 정책 비활성화] id={}, name={}", id, policy.getName());
     }
 

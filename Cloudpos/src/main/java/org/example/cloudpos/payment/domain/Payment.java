@@ -3,9 +3,8 @@ package org.example.cloudpos.payment.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.cloudpos.order.Order;
-
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 
 /**
  * 결제(Payment) 엔티티
@@ -30,12 +29,12 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "paymentId")
+    @Column(name = "payment_id", nullable = false, unique = true)
     private String paymentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id" ,referencedColumnName = "order_id")
-    private Order orderId; // 주문과 관련된 엔티티로 추후에 연관관계 매핑예정
+    @JoinColumn(name = "order_id", referencedColumnName = "order_id", nullable = false)
+    private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_method_id")
@@ -55,8 +54,8 @@ public class Payment {
     private LocalDateTime updatedAt;
 
     @Builder
-    public Payment(Long orderId, PaymentMethod paymentMethod, PaymentStatus paymentStatus, int amountFinal) {
-        this.orderId = orderId;
+    public Payment(Order order, PaymentMethod paymentMethod, PaymentStatus paymentStatus, int amountFinal) {
+        this.order = order;
         this.paymentMethod = paymentMethod;
         this.paymentStatus = paymentStatus;
         this.amountFinal = amountFinal;
@@ -64,6 +63,7 @@ public class Payment {
 
     @PrePersist
     public void prePersist() {
+
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
