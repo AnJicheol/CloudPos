@@ -56,4 +56,15 @@ public class TossPaymentController {
         TossPaymentResponse response = tossPaymentService.confirmPayment(request);
         return ResponseEntity.ok(response);
     }
+
+    //결제 취소 API
+    @PostMapping("/cancel/{paymentKey}")
+    public ResponseEntity<TossPaymentResponse> cancelPayment(
+            @PathVariable String paymentKey,
+            @RequestParam(required = false, defaultValue = "사용자 요청에 의한 취소") String cancelReason) {
+
+        log.info("[POST] /payments/toss/cancel 호출됨 paymentKey={}, reason={}", paymentKey, cancelReason);
+        TossPaymentResponse response = tossPaymentService.cancelPayment(paymentKey, cancelReason);
+        return ResponseEntity.ok(response);
+    }
 }

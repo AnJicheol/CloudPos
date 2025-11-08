@@ -73,4 +73,14 @@ public class Payment {
         this.updatedAt = LocalDateTime.now();
     }
 
+    //결제 비즈니스 메서드
+
+    public void setPaymentId(String paymentId) {
+        this.paymentId = paymentId;
+    }
+
+    public void updateStatus(PaymentStatus newStatus) {
+        this.paymentStatus = newStatus;
+    }
+
 }

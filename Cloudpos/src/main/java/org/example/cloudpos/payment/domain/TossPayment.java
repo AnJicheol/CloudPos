@@ -64,4 +64,12 @@ public class TossPayment {
         this.createdAt = LocalDateTime.now();
     }
 
+    public void updateStatus(String newStatus) {
+        this.status = newStatus;
+    }
+
+    public void updateCancelable(boolean cancelable) {
+        this.isCancelable = cancelable;
+    }
+
 }

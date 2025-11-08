@@ -77,8 +77,8 @@ class TossPaymentServiceTest {
                 .thenReturn(responseEntity);
 
         Payment mockPayment = mock(Payment.class);
-        when(paymentRepository.findByOrderId("order_001")).thenReturn(Optional.of(mockPayment));
-
+        when(paymentRepository.findByOrder_OrderId("order_001"))
+                .thenReturn(Optional.of(mockPayment));
         when(tossPaymentRepository.save(any(TossPayment.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -89,7 +89,7 @@ class TossPaymentServiceTest {
         assertNotNull(result);
         assertEquals("DONE", result.getStatus());
         verify(tossPaymentRepository, times(1)).save(any(TossPayment.class));
-        verify(paymentRepository, times(1)).findByOrderId("order_001");
+        verify(paymentRepository, times(1)).findByOrder_OrderId("order_001");
     }
 
     @Test
