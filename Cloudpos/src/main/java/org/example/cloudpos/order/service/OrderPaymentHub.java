@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class OrderPaymentHub implements PaymentResultPort, PaymentStartPort {
+public class OrderPaymentHub implements PaymentResultListener, PaymentStartListener {
     private final ApplicationEventPublisher publisher;
 
 
