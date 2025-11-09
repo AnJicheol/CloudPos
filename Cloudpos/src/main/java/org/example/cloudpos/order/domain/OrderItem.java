@@ -1,9 +1,11 @@
-package org.example.cloudpos.order;
+package org.example.cloudpos.order.domain;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import static jakarta.persistence.FetchType.LAZY;
 
 
 /**
@@ -26,10 +28,11 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "order_item_id", length = 26, nullable = false, unique = true)
-    private String orderItemId;
+    @ManyToOne(fetch = LAZY)
+    @JoinColumn(name = "order_id")
+    private Order order;
 
-    @Column(name = "product_Id", length = 26, nullable = false, unique = true)
+    @Column(name = "product_Id", length = 26, nullable = false)
     private String productId;
 
     @Column(nullable = false)

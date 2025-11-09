@@ -1,4 +1,4 @@
-package org.example.cloudpos.order;
+package org.example.cloudpos.order.domain;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -21,9 +21,10 @@ public class Order{
     @Column(name = "order_id", length = 26, nullable = false, unique = true)
     private String orderId;
 
+    @Column(name = "cart_id", length = 26, nullable = false, unique = true)
+    private String cartId;
+
     @Column(name = "paid_at", nullable = false)
     private LocalDateTime paidAt;
 
-    @Column(name = "order_item_id", length = 26, nullable = false, unique = true)
-    private String orderItemId;
 }
