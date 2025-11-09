@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.example.cloudpos.order.Order;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 
 /**
@@ -63,6 +64,13 @@ public class Payment {
 
     @PrePersist
     public void prePersist() {
+        // paymentId가 비어 있으면 자동 생성
+        if (this.paymentId == null) {
+            this.paymentId = UUID.randomUUID()
+                    .toString()
+                    .replace("-", "")
+                    .substring(0, 26); // 길이 26자 제한
+        }
 
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
