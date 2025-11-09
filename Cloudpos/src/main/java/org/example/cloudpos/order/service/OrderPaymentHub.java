@@ -1,14 +1,14 @@
 package org.example.cloudpos.order.service;
 
-
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.order.reaction.PaymentSuccessEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+
 @Service
 @RequiredArgsConstructor
-public class OrderPaymentHubImpl implements PaymentResultPort {
+public class OrderPaymentHub implements PaymentResultPort, PaymentStartPort {
     private final ApplicationEventPublisher publisher;
 
 
@@ -24,6 +24,11 @@ public class OrderPaymentHubImpl implements PaymentResultPort {
 
     @Override
     public void onPaymentCanceled(String orderId) {
+
+    }
+
+    @Override
+    public void callPayment() {
 
     }
 }

@@ -3,7 +3,7 @@ package org.example.cloudpos.order.service;
 
 
 
-public interface PaymentResultPort {
+public interface PaymentResultListener {
 
     /**
      * 결제가 정상적으로 완료되었을 때 호출됩니다.
