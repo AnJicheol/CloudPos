@@ -6,6 +6,7 @@ import org.example.cloudpos.product.domain.ProductStatus;
 import org.example.cloudpos.product.domain.Product;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
+import org.example.cloudpos.product.dto.ProductSummaryDto;
 import org.example.cloudpos.product.dto.ProductUpdateRequest;
 import org.example.cloudpos.product.exception.ProductNotFoundException;
 import org.example.cloudpos.product.repository.ProductRepository;
@@ -144,4 +145,62 @@ public class ProductServiceImpl implements ProductService {
             p.setImageUrl(req.imageUrl());
         }
     }
+
+    /**
+     * 상품명을 기준으로 상품을 검색합니다.
+     *
+     * <p>입력된 {@code name}이 {@code null} 또는 공백일 경우 빈 문자열로 처리하며,
+     * {@link ProductStatus#ARCHIVED} 상태(아카이브된 상품)는 검색 결과에서 제외합니다.</p>
+     *
+     * <p>검색 결과는 {@link ProductResponse}로 매핑되어
+     * 페이지 단위로 반환됩니다.</p>
+     *
+     * @param name 검색할 상품명 (부분 일치, 대소문자 무시)
+     * @param pageable 페이지 요청 정보
+     * @return 검색된 상품 목록 페이지
+     * @since 1.0
+     */
+    @Override
+    public Page<ProductResponse> searchByName(String name, Pageable pageable) {
+        String keyword = name == null ? "" : name.trim();
+
+        return repo.findByNameContainingIgnoreCaseAndStatusNot(
+                        keyword, ProductStatus.ARCHIVED, pageable)
+                .map(p ->
+                        new ProductResponse(
+                                p.getId(),
+                                p.getProductId(),
+                                p.getName(),
+                                p.getPrice(),
+                                p.getStatus(),
+                                p.getImageUrl()
+                        )
+                );
+    }
+
+    /**
+     * 상품 식별자({@code productId})로 상품 요약 정보를 조회합니다.
+     *
+     * <p>해당 상품이 존재하지 않을 경우 {@link ProductNotFoundException}을 발생시킵니다.</p>
+     *
+     * <p>조회된 상품은 {@link ProductSummaryDto} 형태로 변환되어
+     * 상품명과 가격 등의 요약 정보만 반환됩니다.</p>
+     *
+     * @param productId 조회할 상품의 식별자
+     * @return 상품의 요약 정보 DTO
+     * @throws ProductNotFoundException 지정된 {@code productId}에 해당하는 상품이 존재하지 않는 경우
+     * @since 1.0
+     */
+    @Override
+    public ProductSummaryDto findSummaryByProductId(String productId) {
+        Product p = repo.findByProductId(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+        return new ProductSummaryDto(
+                p.getProductId(),
+                p.getName(),
+                p.getPrice()
+        );
+    }
+
+
 }
