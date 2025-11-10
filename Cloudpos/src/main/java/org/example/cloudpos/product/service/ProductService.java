@@ -100,5 +100,4 @@ public interface ProductService {
      */
     ProductSummaryDto findSummaryByProductId(String productId);
 
-
 }

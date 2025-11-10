@@ -1,4 +1,4 @@
-package org.example.cloudpos.order.service;
+package org.example.cloudpos.order.listener;
 
 
 
@@ -19,6 +19,4 @@ public interface PaymentResultListener {
      * 결제가 취소되었을 때 호출됩니다.
      */
     void onPaymentCanceled(String orderId);
-
-
 }

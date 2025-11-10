@@ -20,7 +20,6 @@ import static jakarta.persistence.FetchType.LAZY;
  */
 @Entity
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 public class OrderItem {
 
@@ -29,15 +28,25 @@ public class OrderItem {
     private Long id;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "order_id")
+    @JoinColumn(
+            name = "order_fk",
+            foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+    )
     private Order order;
 
     @Column(name = "product_Id", length = 26, nullable = false)
     private String productId;
 
-    @Column(nullable = false)
+    @Column(name = "quantity", nullable = false)
+    private Integer quantity;
+
+    @Column(name = "price",nullable = false)
     private Integer price;
 
-    @Column(name = "payment_method", length = 20)
-    private String paymentMethod;
+    public OrderItem(Order order, String productId, Integer quantity, Integer price) {
+        this.order = order;
+        this.productId = productId;
+        this.quantity = quantity;
+        this.price = price;
+    }
 }

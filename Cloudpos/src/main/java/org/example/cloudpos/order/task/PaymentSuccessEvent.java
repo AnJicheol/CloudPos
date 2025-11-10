@@ -1,4 +1,4 @@
-package org.example.cloudpos.order.reaction;
+package org.example.cloudpos.order.task;
 
 
 public record PaymentSuccessEvent(String orderId) {}
