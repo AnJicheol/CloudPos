@@ -1,6 +1,5 @@
 package org.example.cloudpos.order.service;
 
-
 import com.github.f4b6a3.ulid.UlidCreator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -48,8 +47,17 @@ public class OrderServiceImpl implements OrderService{
         }
 
         order.applyTotalAmount(total);
+
         orderRepository.save(order);
         orderItemRepository.saveAll(orderItems);
         return order;
     }
+
+    @Transactional()
+    public Order getOrderById(String orderId){
+        return orderRepository.findOrderByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException());
+    }
+
 }
+
