@@ -26,6 +26,10 @@ dependencies {
     // DB 드라이버
     runtimeOnly 'com.mysql:mysql-connector-j'
 
+    // DB 성능 측정
+    implementation 'p6spy:p6spy:3.9.1'
+
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
@@ -36,6 +40,11 @@ dependencies {
 
     //auth
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    //jwt
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5' // JSON 직렬화용
 
     //ULID
     implementation "com.github.f4b6a3:ulid-creator:5.2.3"

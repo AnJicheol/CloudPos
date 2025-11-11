@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-
+import org.example.cloudpos.auth.AuthProvider;
 
 
 /**
@@ -29,7 +29,7 @@ import lombok.NonNull;
 @Table(
         name = "member"
 )
-public class MemberEntity {
+public class Member {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,9 +40,14 @@ public class MemberEntity {
     @Column(name = "inventory_id", nullable = false)
     private Long inventoryId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "provider", nullable = false)
+    private AuthProvider provider;
+
     @Builder
-    public MemberEntity(@NonNull Long userId, @NonNull Long inventoryId) {
+    public Member(Long userId, Long inventoryId, AuthProvider provider) {
         this.userId = userId;
         this.inventoryId = inventoryId;
+        this.provider = provider;
     }
 }
