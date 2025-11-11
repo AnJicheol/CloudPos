@@ -35,6 +35,7 @@ public class InventoryController {
     // Inventory (매장) 관련 엔드포인트
     // ==========================================================
 
+
     @Operation(
             summary = "신규 매장 생성",
             description = "ULID를 외부 식별자로 사용하는 매장을 생성합니다."
