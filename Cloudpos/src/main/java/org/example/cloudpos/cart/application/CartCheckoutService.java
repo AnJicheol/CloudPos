@@ -3,6 +3,8 @@ package org.example.cloudpos.cart.application;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.cart.domain.CartState;
 import org.example.cloudpos.cart.dto.CartItemDto;
+import org.example.cloudpos.cart.exception.CartExpiredException;
+import org.example.cloudpos.cart.exception.InvalidCartStateException;
 import org.example.cloudpos.cart.service.CartService;
 import org.springframework.stereotype.Service;
 
@@ -24,8 +26,9 @@ public class CartCheckoutService implements CartCheckoutUseCase {
     @Override
     public List<CartItemDto>  beginCheckout(String cartId) {
         if (cartService.getState(cartId) != CartState.CHECKOUT_PENDING) {
-            cartService.beginCheckout(cartId);
+            throw new InvalidCartStateException("장바구니가 결제 가능한 상태가 아닙니다.");
         }
+        cartService.beginCheckout(cartId);
         return cartService.getAll(cartId);
     }
 
