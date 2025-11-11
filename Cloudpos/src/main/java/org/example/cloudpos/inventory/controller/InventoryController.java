@@ -95,7 +95,7 @@ public class InventoryController {
     @DeleteMapping("/inventories/{inventoryId}/products/{productId}")
     public ResponseEntity<Void> removeInventoryProduct(
             @PathVariable String inventoryId,
-            @PathVariable Long productId
+            @PathVariable String productId
     ) {
         inventoryService.removeProduct(inventoryId, productId);
         return ResponseEntity.noContent().build();
@@ -116,9 +116,9 @@ public class InventoryController {
     )
     @PostMapping("/products")
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductCreateRequest req) {
-        Long id = productService.create(req);
-        ProductResponse body = productService.get(id);
-        return ResponseEntity.created(URI.create("/api/products/" + id)).body(body);
+        String productId = productService.create(req);
+        ProductResponse body = productService.get(productId);
+        return ResponseEntity.created(URI.create("/api/products/" + productId)).body(body);
     }
 
     @Operation(
@@ -130,9 +130,9 @@ public class InventoryController {
             description = "상품 조회 성공",
             content = @Content(schema = @Schema(implementation = ProductResponse.class))
     )
-    @GetMapping("/products/{id}")
-    public ProductResponse getProduct(@PathVariable Long id) {
-        return productService.get(id);
+    @GetMapping("/products/{productId}")
+    public ProductResponse getProduct(@PathVariable String productId) {
+        return productService.get(productId);
     }
 
     @Operation(
@@ -164,9 +164,9 @@ public class InventoryController {
             description = "상품 수정 성공",
             content = @Content
     )
-    @PatchMapping("/products/{id}")
-    public ResponseEntity<Void> updateProduct(@PathVariable Long id, @RequestBody ProductUpdateRequest req) {
-        productService.update(id, req);
+    @PatchMapping("/products/{productId}")
+    public ResponseEntity<Void> updateProduct(@PathVariable String productId, @RequestBody ProductUpdateRequest req) {
+        productService.update(productId, req);
         return ResponseEntity.noContent().build();
     }
 
@@ -179,9 +179,9 @@ public class InventoryController {
             description = "상품 아카이브 성공",
             content = @Content
     )
-    @DeleteMapping("/products/{id}")
-    public ResponseEntity<Void> archiveProduct(@PathVariable Long id) {
-        productService.archive(id);
+    @DeleteMapping("/products/{productId}")
+    public ResponseEntity<Void> archiveProduct(@PathVariable String productId) {
+        productService.archive(productId);
         return ResponseEntity.noContent().build();
     }
 }

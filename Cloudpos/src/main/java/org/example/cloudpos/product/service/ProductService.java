@@ -31,16 +31,16 @@ public interface ProductService {
      * @param req 상품 생성 요청 DTO
      * @return 생성된 상품의 DB 기본 키(id)
      */
-    Long create(ProductCreateRequest req);
+    String create(ProductCreateRequest req);
 
     /**
      * 상품을 ID로 조회합니다.
      *
-     * @param id 상품의 DB 기본 키
+     * @param productId 상품의 DB 기본 키
      * @return 상품 정보를 담은 응답 DTO
      * @throws org.example.cloudpos.product.exception.ProductNotFoundException 존재하지 않는 상품일 경우
      */
-    ProductResponse get(Long id);
+    ProductResponse get(String productId);
 
     /**
      * 상품을 소프트 삭제 처리합니다.
@@ -48,10 +48,10 @@ public interface ProductService {
      * <p>실제로 DB에서 삭제하지 않고 상태를
      * {@link ProductStatus#ARCHIVED} 로 변경합니다.</p>
      *
-     * @param id 상품의 DB 기본 키
+     * @param productId 상품의 DB 기본 키
      * @throws org.example.cloudpos.product.exception.ProductNotFoundException 삭제 대상이 존재하지 않을 경우
      */
-    void archive(Long id);
+    void archive(String productId);
 
     /**
      * 상품 목록을 페이지 단위로 조회합니다.
@@ -74,11 +74,11 @@ public interface ProductService {
      * <p>상품이 존재하지 않을 경우 {@link org.example.cloudpos.product.exception.ProductNotFoundException}
      * 이 발생하며, 정상적으로 수정되면 별도의 반환값은 없습니다.</p>
      *
-     * @param id  수정 대상 상품의 DB 기본 키
+     * @param productId  수정 대상 상품의 DB 기본 키
      * @param req 수정할 상품 정보가 담긴 요청 DTO
      * @throws org.example.cloudpos.product.exception.ProductNotFoundException 수정 대상이 존재하지 않을 경우
      */
-    void update(Long id, ProductUpdateRequest req);
+    void update(String productId, ProductUpdateRequest req);
 
     /**
      * 상품명을 기준으로 상품을 검색합니다.
