@@ -50,7 +50,6 @@ public class OrderServiceImpl implements OrderService{
         order.applyTotalAmount(total);
         orderRepository.save(order);
         orderItemRepository.saveAll(orderItems);
-
         return order;
     }
 }
