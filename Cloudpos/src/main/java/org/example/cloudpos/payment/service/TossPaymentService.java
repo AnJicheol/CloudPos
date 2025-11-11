@@ -168,6 +168,9 @@ public class TossPaymentService {
             paymentResultListener.onPaymentCanceled();
 
             return body;
+
+
+
         }catch (HttpClientErrorException e) {
             String msg = e.getResponseBodyAsString() != null ? e.getResponseBodyAsString() : e.getMessage();
             log.error("[TOSS 결제 취소 실패] {}", msg);
