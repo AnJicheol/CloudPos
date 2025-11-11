@@ -164,6 +164,7 @@ public class ProductServiceImpl implements ProductService {
     public Page<ProductResponse> searchByName(String name, Pageable pageable) {
         String keyword = name == null ? "" : name.trim();
 
+
         return repo.findByNameContainingIgnoreCaseAndStatusNot(
                         keyword, ProductStatus.ARCHIVED, pageable)
                 .map(p ->
@@ -176,6 +177,7 @@ public class ProductServiceImpl implements ProductService {
                                 p.getImageUrl()
                         )
                 );
+
     }
 
     /**

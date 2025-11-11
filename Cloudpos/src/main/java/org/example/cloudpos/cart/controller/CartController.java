@@ -1,6 +1,10 @@
 package org.example.cloudpos.cart.controller;
 
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.cart.domain.CartState;
 import org.example.cloudpos.cart.dto.CartItemDto;
@@ -51,6 +55,8 @@ public class CartController {
     public record AddFirstRequest(String productId) {}
     public record GenericStateResponse(String state) {}
     public record QuantityUpdateResponse(int quantity, String state) {}
+
+
 
     //장바구니 생성
     @PostMapping
