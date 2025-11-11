@@ -103,6 +103,7 @@ public class CartService {
         TRANSITIONS.put(CartState.CLOSED, new EnumMap<>(CartEvent.class));
     }
 
+
     private Optional<CartState> nextStateOpt(CartState cur, CartEvent event) {
         EnumMap<CartEvent, CartState> byEvent = TRANSITIONS.get(cur);
         if (byEvent == null) return Optional.empty();
