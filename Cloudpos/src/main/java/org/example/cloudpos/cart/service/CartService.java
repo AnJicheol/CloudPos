@@ -200,6 +200,7 @@ public class CartService {
     public List<CartItemDto> getAll(String cartId) {
         ensureAlive(cartId);
 
+        //productid
         List<String> ids = redisTemplate.opsForList().range(itemsKey(cartId), 0, -1);
         if (ids == null || ids.isEmpty()) return List.of();
 
