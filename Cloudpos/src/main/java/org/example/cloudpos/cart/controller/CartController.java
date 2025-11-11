@@ -57,7 +57,6 @@ public class CartController {
     public record QuantityUpdateResponse(int quantity, String state) {}
 
 
-
     //장바구니 생성
     @PostMapping
     public ResponseEntity<CreateCartResponse> createCart(){
