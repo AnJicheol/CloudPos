@@ -66,6 +66,8 @@ public class CartController {
         CartState state=cartService.getState(cartId);
         return ResponseEntity.ok(new CreateCartResponse(cartId, state.name()));
     }
+
+
     //상품 담기
     @PostMapping("/{cartId}/items:first")
     public ResponseEntity<QuantityUpdateResponse> addFirst(@PathVariable String cartId, @RequestBody AddFirstRequest request){
