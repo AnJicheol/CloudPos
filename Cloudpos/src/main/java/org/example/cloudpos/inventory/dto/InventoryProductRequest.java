@@ -24,5 +24,5 @@ import jakarta.validation.constraints.NotNull;
  * @since 1.0
  */
 public record InventoryProductRequest(
-        @NotNull Long productId
+        @NotNull String productId
 ) {}

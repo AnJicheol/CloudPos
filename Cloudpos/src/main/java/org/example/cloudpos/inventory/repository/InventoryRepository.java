@@ -63,5 +63,5 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
      * @param productId 상품 기본키 ID
      * @return 삭제된 행의 개수
      */
-    long deleteByInventoryIdAndProduct_Id(String inventoryId, Long productId);
+    long deleteByInventoryIdAndProduct_ProductId(String inventoryId, String productId);
 }
