@@ -1,5 +1,6 @@
 package org.example.cloudpos.payment.service;
 
+import org.example.cloudpos.order.listener.PaymentResultListener;
 import org.example.cloudpos.payment.domain.Payment;
 import org.example.cloudpos.payment.domain.TossPayment;
 import org.example.cloudpos.payment.dto.TossPaymentRequest;
@@ -39,6 +40,9 @@ class TossPaymentServiceTest {
 
     @Mock
     private RestTemplate restTemplate;  // 외부 API 호출 Mock
+
+    @Mock
+    private PaymentResultListener paymentResultListener;
 
     @Mock
     private TossPaymentRepository tossPaymentRepository; // DB Mock
