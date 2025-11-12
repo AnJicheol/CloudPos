@@ -1,8 +1,10 @@
 package org.example.cloudpos.payment.service;
 
+import com.github.f4b6a3.ulid.UlidCreator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.cloudpos.order.Order;
+
+import org.example.cloudpos.order.domain.Order;
 import org.example.cloudpos.payment.domain.Payment;
 import org.example.cloudpos.payment.domain.PaymentMethod;
 import org.example.cloudpos.payment.domain.PaymentStatus;
@@ -35,14 +37,25 @@ public class PaymentService {
     //결제 생성, 주문생성시 함께 호출되어 Payment엔티티 생성
     @Transactional
     public PaymentResponse createPayment(Order order, PaymentRequest request) {
+        //결제 중복 방지
+        if (paymentRepository.findByOrder_OrderId(order.getOrderId()).isPresent()) {
+            throw new IllegalStateException("이미 결제가 생성된 주문입니다. orderId=" + order.getOrderId());
+        }
+        // 결제 금액 검증
+        if (order.getTotalAmount() <= 0) {
+            throw new IllegalArgumentException("결제 금액이 0원 이하인 주문입니다. orderId=" + order.getOrderId());
+        }
+        String paymentId = UlidCreator.getUlid().toString();
+
         PaymentMethod method = paymentMethodRepository.findById(request.getPaymentMethodId())
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 결제 수단입니다. id=" + request.getPaymentMethodId()));
 
         Payment payment = Payment.builder()
+                .paymentId(paymentId)
                 .order(order)
                 .paymentMethod(method)
                 .paymentStatus(PaymentStatus.BEFORE_PAYMENT)
-                .amountFinal(order.getTotalAmount()) // 주문 총액을 받아와야하는데 의논필요
+                .amountFinal(order.getTotalAmount())
                 .build();
 
         paymentRepository.save(payment);

@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
  *
  * <p>엔드포인트 예시:</p>
  * POST /payments/toss/confirm
- *
  * 요청 예시:
  * <pre>
  * {
@@ -52,7 +51,9 @@ public class TossPaymentController {
     // 토스 결제 승인 API
     @PostMapping("/confirm")
     public ResponseEntity<TossPaymentResponse> confirmPayment(@RequestBody TossPaymentRequest request) {
-        log.info("[POST] /api/payments/toss/confirm 호출됨");
+        log.info("[POST] /payments/toss/confirm 호출됨 orderId={}, paymentKey={}",
+                request.getOrderId(), request.getPaymentKey());
+
         TossPaymentResponse response = tossPaymentService.confirmPayment(request);
         return ResponseEntity.ok(response);
     }
@@ -61,10 +62,13 @@ public class TossPaymentController {
     @PostMapping("/cancel/{paymentKey}")
     public ResponseEntity<TossPaymentResponse> cancelPayment(
             @PathVariable String paymentKey,
+            @RequestParam String orderId,
             @RequestParam(required = false, defaultValue = "사용자 요청에 의한 취소") String cancelReason) {
 
-        log.info("[POST] /payments/toss/cancel 호출됨 paymentKey={}, reason={}", paymentKey, cancelReason);
-        TossPaymentResponse response = tossPaymentService.cancelPayment(paymentKey, cancelReason);
+        log.info("[POST] /payments/toss/cancel 호출됨 orderId={}, paymentKey={}, reason={}",
+                orderId, paymentKey, cancelReason);
+
+        TossPaymentResponse response = tossPaymentService.cancelPayment(paymentKey, cancelReason, orderId);
         return ResponseEntity.ok(response);
     }
 }

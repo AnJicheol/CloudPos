@@ -33,6 +33,7 @@ public class DiscountPolicyService {
     private final DiscountPolicyRepository discountPolicyRepository;
 
     // 할인 정책 등록
+    @Transactional
     public DiscountPolicyResponse createPolicy(DiscountPolicyRequest request) {
         DiscountPolicy policy = DiscountPolicy.builder()
                 .name(request.getName())

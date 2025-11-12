@@ -2,7 +2,8 @@ package org.example.cloudpos.payment.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.example.cloudpos.order.Order;
+import org.example.cloudpos.order.domain.Order;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -55,22 +56,18 @@ public class Payment {
     private LocalDateTime updatedAt;
 
     @Builder
-    public Payment(Order order, PaymentMethod paymentMethod, PaymentStatus paymentStatus, int amountFinal) {
+    public Payment(String paymentId, Order order, PaymentMethod paymentMethod, PaymentStatus paymentStatus, int amountFinal) {
+        this.paymentId = paymentId;
         this.order = order;
         this.paymentMethod = paymentMethod;
         this.paymentStatus = paymentStatus;
         this.amountFinal = amountFinal;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     @PrePersist
     public void prePersist() {
-        // paymentId가 비어 있으면 자동 생성
-        if (this.paymentId == null) {
-            this.paymentId = UUID.randomUUID()
-                    .toString()
-                    .replace("-", "")
-                    .substring(0, 26); // 길이 26자 제한
-        }
 
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
@@ -82,11 +79,6 @@ public class Payment {
     }
 
     //결제 비즈니스 메서드
-
-    public void setPaymentId(String paymentId) {
-        this.paymentId = paymentId;
-    }
-
     public void updateStatus(PaymentStatus newStatus) {
         this.paymentStatus = newStatus;
     }
