@@ -96,7 +96,6 @@ public interface ProductService {
      *
      * @param productId 조회할 상품의 식별자
      * @return 상품의 요약 정보 DTO
-     * @throws ProductNotFoundException 지정된 {@code productId}에 해당하는 상품이 존재하지 않는 경우
      */
     ProductSummaryDto findSummaryByProductId(String productId);
 
