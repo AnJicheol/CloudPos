@@ -29,7 +29,7 @@ public class DuplicateStoreProductException extends RuntimeException {
      * @param inventoryId 매장의 외부 식별자 (ULID)
      * @param productId 중복된 상품의 ID
      */
-    public DuplicateStoreProductException(String inventoryId, Long productId) {
+    public DuplicateStoreProductException(String inventoryId, String productId) {
         super("이미 등록된 상품입니다. inventoryId=" + inventoryId + ", productId=" + productId);
     }
 
@@ -41,7 +41,7 @@ public class DuplicateStoreProductException extends RuntimeException {
      * @param productId 중복된 상품의 ID
      * @param cause 내부 원인 예외 (예: DataIntegrityViolationException)
      */
-    public DuplicateStoreProductException(String inventoryId, Long productId, Throwable cause) {
+    public DuplicateStoreProductException(String inventoryId, String productId, Throwable cause) {
         super("이미 등록된 상품입니다. inventoryId=" + inventoryId + ", productId=" + productId, cause);
     }
 }

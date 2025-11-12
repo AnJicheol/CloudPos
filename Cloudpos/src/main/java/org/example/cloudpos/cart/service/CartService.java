@@ -103,6 +103,7 @@ public class CartService {
         TRANSITIONS.put(CartState.CLOSED, new EnumMap<>(CartEvent.class));
     }
 
+
     private Optional<CartState> nextStateOpt(CartState cur, CartEvent event) {
         EnumMap<CartEvent, CartState> byEvent = TRANSITIONS.get(cur);
         if (byEvent == null) return Optional.empty();
@@ -200,6 +201,7 @@ public class CartService {
     public List<CartItemDto> getAll(String cartId) {
         ensureAlive(cartId);
 
+        //productid
         List<String> ids = redisTemplate.opsForList().range(itemsKey(cartId), 0, -1);
         if (ids == null || ids.isEmpty()) return List.of();
 

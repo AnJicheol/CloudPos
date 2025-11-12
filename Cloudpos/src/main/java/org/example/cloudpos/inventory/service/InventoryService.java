@@ -75,9 +75,9 @@ public class InventoryService {
      * @throws DuplicateStoreProductException 동일 상품이 이미 등록된 경우
      */
     @Transactional
-    public void addProduct(String inventoryId, Long productId) {
+    public void addProduct(String inventoryId, String productId) {
         // 상품 존재 확인
-        Product product = productRepo.findById(productId)
+        Product product = productRepo.findByProductId(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
         // 매장 존재 확인
@@ -127,8 +127,8 @@ public class InventoryService {
      * @throws IllegalArgumentException 매장이 존재하지 않거나 해당 상품이 매장에 없을 경우
      */
     @Transactional
-    public void removeProduct(String inventoryId, Long productId) {
-        long deleted = inventoryRepo.deleteByInventoryIdAndProduct_Id(inventoryId, productId);
+    public void removeProduct(String inventoryId, String productId) {
+        long deleted = inventoryRepo.deleteByInventoryIdAndProduct_ProductId(inventoryId, productId);
         if (deleted == 0) {
             throw new IllegalArgumentException("해당 매장에서 해당 상품을 찾을 수 없습니다.");
         }

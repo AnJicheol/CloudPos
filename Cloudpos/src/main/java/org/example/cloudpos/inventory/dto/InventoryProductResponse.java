@@ -34,7 +34,7 @@ import org.example.cloudpos.product.domain.ProductStatus;
  * @since 1.0
  */
 public record InventoryProductResponse(
-        Long productId,
+        String productId,
         String name,
         int price,
         ProductStatus status,
@@ -48,7 +48,7 @@ public record InventoryProductResponse(
      */
     public static InventoryProductResponse from(Product p) {
         return new InventoryProductResponse(
-                p.getId(),
+                p.getProductId(),
                 p.getName(),
                 p.getPrice(),
                 p.getStatus(),

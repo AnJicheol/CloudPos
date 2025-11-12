@@ -56,7 +56,7 @@ public class ProductServiceImpl implements ProductService {
      * @return 생성된 상품의 DB 기본 키(id)
      */
     @Override
-    public Long create(ProductCreateRequest req) {
+    public String create(ProductCreateRequest req) {
         Product p = new Product();
         p.setProductId(UlidCreator.getUlid().toString());
         p.setName(req.name());
@@ -64,20 +64,20 @@ public class ProductServiceImpl implements ProductService {
         p.setStatus(req.status() != null ? req.status() : ProductStatus.ACTIVE);
         p.setImageUrl(req.imageUrl());
 
-        return repo.save(p).getId();
+        return repo.save(p).getProductId();
     }
 
     /**
      * 상품을 ID로 조회합니다.
      *
-     * @param id 상품의 DB 기본 키
+     * @param productId 상품의 DB 기본 키
      * @return 상품 정보를 담은 응답 DTO
      * @throws ProductNotFoundException 조회 대상이 존재하지 않을 경우
      */
     @Transactional(readOnly = true)
     @Override
-    public ProductResponse get(Long id) {
-        Product p = repo.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
+    public ProductResponse get(String productId) {
+        Product p = repo.findByProductId(productId).orElseThrow(() -> new ProductNotFoundException(productId));
         return new ProductResponse(p.getId(), p.getProductId(), p.getName(), p.getPrice(), p.getStatus(),p.getImageUrl());
     }
 
@@ -87,12 +87,12 @@ public class ProductServiceImpl implements ProductService {
      * <p>실제 DB에서 삭제하지 않고 상태만 변경하며,
      * 트랜잭션 종료 시 JPA Dirty Checking에 의해 자동으로 UPDATE 됩니다.</p>
      *
-     * @param id 상품의 DB 기본 키
+     * @param productId 상품의 DB 기본 키
      * @throws ProductNotFoundException 삭제 대상이 존재하지 않을 경우
      */
     @Override
-    public void archive(Long id) {
-        Product p = repo.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
+    public void archive(String productId) {
+        Product p = repo.findByProductId(productId).orElseThrow(() -> new ProductNotFoundException(productId));
         p.setStatus(ProductStatus.ARCHIVED);
     }
 
@@ -124,13 +124,13 @@ public class ProductServiceImpl implements ProductService {
      * <p>상품이 존재하지 않을 경우 {@link ProductNotFoundException}이 발생하며,
      * 수정된 엔티티는 트랜잭션 종료 시점에 JPA Dirty Checking을 통해 자동 반영됩니다.</p>
      *
-     * @param id 수정 대상 상품의 DB 기본 키
+     * @param productId 수정 대상 상품의 DB 기본 키
      * @param req 수정할 상품 정보가 담긴 요청 DTO
      * @throws ProductNotFoundException 수정 대상 상품이 존재하지 않을 경우
      */
     @Override
-    public void update(Long id, ProductUpdateRequest req) {
-        Product p = repo.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
+    public void update(String productId, ProductUpdateRequest req) {
+        Product p = repo.findByProductId(productId).orElseThrow(() -> new ProductNotFoundException(productId));
 
         if (req.name() != null) {
             p.setName(req.name());
@@ -164,6 +164,7 @@ public class ProductServiceImpl implements ProductService {
     public Page<ProductResponse> searchByName(String name, Pageable pageable) {
         String keyword = name == null ? "" : name.trim();
 
+
         return repo.findByNameContainingIgnoreCaseAndStatusNot(
                         keyword, ProductStatus.ARCHIVED, pageable)
                 .map(p ->
@@ -176,6 +177,7 @@ public class ProductServiceImpl implements ProductService {
                                 p.getImageUrl()
                         )
                 );
+
     }
 
     /**
