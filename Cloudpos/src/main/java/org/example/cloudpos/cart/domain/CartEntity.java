@@ -41,21 +41,7 @@ public class CartEntity {
     @Column(name="cart_id", nullable = false, unique = true, length=26)
     private String cartId;
 
-    @Column(name="user_id", nullable = false)
-    private Long userId;
+    @Column(name="inventory_id", nullable = false)
+    private Long inventoryId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name="state", nullable=false)
-    private CartState state= CartState.EMPTY;
-    @PrePersist
-    void prePersist() {
-        if (cartId == null) {
-            cartId = UlidGenerator.generate(); // domain/util
-        }
-    }
-
-    public CartEntity(String cartId, Long userId) {
-        this.cartId = cartId;
-        this.userId = userId;
-    }
 }

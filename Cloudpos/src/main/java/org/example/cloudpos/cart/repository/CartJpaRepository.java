@@ -1,5 +1,6 @@
-package org.example.cloudpos.cart.domain;
+package org.example.cloudpos.cart.repository;
 
+import org.example.cloudpos.cart.domain.CartEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
