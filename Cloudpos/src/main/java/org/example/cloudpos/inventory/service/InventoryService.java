@@ -8,7 +8,10 @@ import org.example.cloudpos.inventory.dto.InventoryProductResponse;
 import org.example.cloudpos.inventory.exception.DuplicateStoreProductException;
 import org.example.cloudpos.inventory.exception.InventoryNotFoundException;
 import org.example.cloudpos.inventory.repository.InventoryRepository;
+import org.example.cloudpos.product.api.ProductAccessApi;
+import org.example.cloudpos.inventory.listener.ProductReplyListener;
 import org.example.cloudpos.product.domain.Product;
+import org.example.cloudpos.product.dto.ProductSummaryDto;
 import org.example.cloudpos.product.exception.ProductNotFoundException;
 import org.example.cloudpos.product.repository.ProductRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -45,11 +48,12 @@ public class InventoryService {
 
     private final InventoryRepository inventoryRepo;
     private final ProductRepository productRepo;
+    private final ProductAccessApi productAccessApi;
+    /** Product 모듈에서 제공하는 콜백 인터페이스 구현체 (Inventory 쪽에 있음) */
+    private final ProductReplyListener inventoryReplyListener;
 
     /**
      * 신규 매장을 생성합니다.
-     *
-     * <p>매장은 ULID를 외부 식별자로 사용하며, 생성 시 상품은 포함되지 않습니다.</p>
      *
      * @param req 매장 생성 요청 DTO
      * @return 생성된 매장의 ULID
@@ -64,41 +68,61 @@ public class InventoryService {
     /**
      * 매장에 상품을 추가합니다.
      *
-     * <p>본사 상품(Product)을 참조하여 매장에 등록합니다.
-     * 하나의 상품은 하나의 매장에만 등록될 수 있으며,
-     * 중복 등록 시 {@link DuplicateStoreProductException}이 발생합니다.</p>
+     * <p>콜백형 API를 사용하여, 먼저 상품 판매 가능 여부를 Product 모듈에 요청하고,
+     * 응답은 {@link ProductReplyListener} 구현체에서 받아
+     * {@link #handleSellableChecked(String, String, boolean)} 로 위임합니다.</p>
      *
      * @param inventoryId 매장 외부 식별자 (ULID)
      * @param productId 등록할 상품의 ID
-     * @throws ProductNotFoundException 지정한 상품이 존재하지 않을 경우
-     * @throws InventoryNotFoundException 지정한 매장이 존재하지 않을 경우
-     * @throws DuplicateStoreProductException 동일 상품이 이미 등록된 경우
      */
-    @Transactional
     public void addProduct(String inventoryId, String productId) {
-        // 상품 존재 확인
+        productAccessApi.requestSellableCheck(
+                inventoryId,
+                productId,
+                inventoryReplyListener   //  필드 그대로 넘김 (inventoryReplyListener())
+        );
+    }
+
+    /**
+     * 콜백: 상품 판매 가능 여부 응답 처리.
+     *
+     * @param inventoryId 매장 외부 식별자
+     * @param productId 상품 식별자
+     * @param sellable 판매 가능 여부
+     */
+    public void handleSellableChecked(String inventoryId, String productId, boolean sellable) {
+        if (!sellable) {
+            throw new IllegalStateException("판매 불가 상태의 상품입니다.");
+        }
+
+        // 판매 가능 → 실제 진열 등록
         Product product = productRepo.findByProductId(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
-        // 매장 존재 확인
         Inventory inventory = inventoryRepo.findFirstByInventoryId(inventoryId)
                 .orElseThrow(() -> new InventoryNotFoundException(inventoryId));
 
-        // 매장 이름 스냅샷 복제 후 저장
-        Inventory newRow = new Inventory(inventoryId, inventory.getName(), product);
+        Inventory row = new Inventory(inventoryId, inventory.getName(), product);
+
         try {
-            inventoryRepo.save(newRow);
+            inventoryRepo.save(row);
         } catch (DataIntegrityViolationException e) {
-            // UNIQUE 제약 위반 시 도메인 예외로 변환
             throw new DuplicateStoreProductException(inventoryId, productId, e);
         }
     }
 
     /**
-     * 특정 매장에 등록된 상품 목록을 조회합니다.
+     * 콜백: 상품 없음.
      *
-     * <p>매장이 존재하지 않으면 예외를 던지며,
-     * 조회 시 N+1 문제를 방지하기 위해 {@code fetch join}을 사용합니다.</p>
+     * @param inventoryId 매장 외부 식별자
+     * @param productId 상품 식별자
+     */
+    public void handleProductNotFound(String inventoryId, String productId) {
+        throw new ProductNotFoundException(productId);
+    }
+
+    /**
+     * 특정 매장에 등록된 상품 목록을 조회합니다.
      *
      * @param inventoryId 매장 외부 식별자 (ULID)
      * @return 매장 내 상품 정보를 담은 DTO 목록
@@ -106,11 +130,9 @@ public class InventoryService {
      */
     @Transactional(readOnly = true)
     public List<InventoryProductResponse> listProducts(String inventoryId) {
-        // 매장 존재 검증
         if (!inventoryRepo.existsByInventoryId(inventoryId)) {
             throw new IllegalArgumentException("해당 매장이 존재하지 않습니다.");
         }
-        // N+1 방지용 fetch join
         return inventoryRepo.findAllWithProductByInventoryId(inventoryId).stream()
                 .map(inv -> InventoryProductResponse.from(inv.getProduct()))
                 .toList();
@@ -119,14 +141,9 @@ public class InventoryService {
     /**
      * 매장에서 특정 상품을 제거합니다.
      *
-     * <p>매장-상품 매핑 테이블에서 해당 상품을 삭제하며,
-     * 매장이나 상품 엔티티 자체에는 영향을 주지 않습니다.</p>
-     *
      * @param inventoryId 매장 외부 식별자 (ULID)
-     * @param productId 상품 기본키 ID
-     * @throws IllegalArgumentException 매장이 존재하지 않거나 해당 상품이 매장에 없을 경우
+     * @param productId 상품 식별자
      */
-    @Transactional
     public void removeProduct(String inventoryId, String productId) {
         long deleted = inventoryRepo.deleteByInventoryIdAndProduct_ProductId(inventoryId, productId);
         if (deleted == 0) {
