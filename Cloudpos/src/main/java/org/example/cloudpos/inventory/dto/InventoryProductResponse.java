@@ -15,7 +15,7 @@ import org.example.cloudpos.product.domain.ProductStatus;
  * <h2>예시 응답(JSON)</h2>
  * <pre>{@code
  * {
- *   "productId": 1,
+ *   "productId": "PRD_01HXXXXXX",
  *   "name": "아메리카노",
  *   "price": 3000,
  *   "status": "ACTIVE",
@@ -23,15 +23,11 @@ import org.example.cloudpos.product.domain.ProductStatus;
  * }
  * }</pre>
  *
- * @param productId 상품 기본키 ID
+ * @param productId 상품 식별자(비즈니스 키, ULID 문자열 등)
  * @param name 상품명
  * @param price 상품 가격
  * @param status 상품 상태 ({@link ProductStatus})
  * @param imageUrl 상품 이미지 URL (선택)
- *
- * @see org.example.cloudpos.inventory.service.InventoryService#listProducts(String)
- * @see org.example.cloudpos.product.domain.Product
- * @since 1.0
  */
 public record InventoryProductResponse(
         String productId,
@@ -39,7 +35,8 @@ public record InventoryProductResponse(
         int price,
         ProductStatus status,
         String imageUrl
-) {
+)
+ {
     /**
      * {@link Product} 엔티티를 {@code InventoryProductResponse}로 변환합니다.
      *
