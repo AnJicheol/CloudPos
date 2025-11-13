@@ -11,15 +11,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ProductSummaryHandlerApiImpl implements ProductSummaryHandlerApi {
 
-    private final ProductSummaryRequestListener productListener;
+    private final InventoryListener inventoryListener;
 
     @Override
     @Transactional
     public ProductSummary getProductSummary(String productId) {
-        ProductSummary pv = productListener.onProductSummaryRequest(productId);
+        ProductSummary pv = inventoryListener.getProduct(productId);
+
         if (pv == null) throw new CartProductNotFoundException(productId);
         return pv;
     }
-
-
 }
