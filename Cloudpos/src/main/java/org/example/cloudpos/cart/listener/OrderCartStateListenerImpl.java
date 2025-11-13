@@ -9,6 +9,16 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * <h2>OrderCartStateListenerImpl</h2>
+ *
+ * {@link OrderCartStateListener}의 구현체로,
+ * 장바구니(Cart)의 상태 변화를 감지하여 {@link CartService}를 통해
+ * 적절한 상태 전이 및 아이템 조회를 수행합니다.
+ *
+ * <p>결제 시작, 결제 성공, 결제 취소 등의 이벤트를 처리하며
+ * 장바구니 상태가 올바르지 않을 경우 {@link InvalidCartStateException}을 발생시킵니다.</p>
+ */
 @Component
 @RequiredArgsConstructor
 public class OrderCartStateListenerImpl implements OrderCartStateListener {
