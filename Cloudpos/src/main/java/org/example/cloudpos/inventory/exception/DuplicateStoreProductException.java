@@ -1,10 +1,12 @@
 package org.example.cloudpos.inventory.exception;
 
+import org.example.cloudpos.inventory.service.InventoryServiceImpl;
+
 /**
  * 매장에 동일한 상품을 중복 등록하려 할 때 발생하는 예외입니다.
  *
  * <p>이미 다른 매장 또는 동일 매장에 등록된 상품을
- * 다시 추가하려는 경우 {@link org.example.cloudpos.inventory.service.InventoryService}
+ * 다시 추가하려는 경우 {@link InventoryServiceImpl}
  * 에서 이 예외를 던집니다.</p>
  *
  * <p>데이터베이스의 유니크 제약조건 위반이나
@@ -18,7 +20,7 @@ package org.example.cloudpos.inventory.exception;
  *
  * <p>이 예외는 컨트롤러 단에서 {@code 409 Conflict} 상태 코드로 변환됩니다.</p>
  *
- * @see org.example.cloudpos.inventory.service.InventoryService#addProduct(String, Long)
+ * @see InventoryServiceImpl#addProduct(String, Long)
  * @since 1.0
  */
 public class DuplicateStoreProductException extends RuntimeException {

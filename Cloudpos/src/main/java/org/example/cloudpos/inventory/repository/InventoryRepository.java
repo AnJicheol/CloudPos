@@ -1,6 +1,7 @@
 package org.example.cloudpos.inventory.repository;
 
 import org.example.cloudpos.inventory.domain.Inventory;
+import org.example.cloudpos.inventory.service.InventoryServiceImpl;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -23,7 +24,7 @@ import java.util.Optional;
  * </ul>
  *
  * @see org.example.cloudpos.inventory.domain.Inventory
- * @see org.example.cloudpos.inventory.service.InventoryService
+ * @see InventoryServiceImpl
  * @since 1.0
  */
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {

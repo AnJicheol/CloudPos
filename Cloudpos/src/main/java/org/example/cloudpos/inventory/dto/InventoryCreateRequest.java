@@ -1,6 +1,7 @@
 package org.example.cloudpos.inventory.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import org.example.cloudpos.inventory.service.InventoryServiceImpl;
 
 /**
  * 매장(Inventory) 생성 요청 DTO.
@@ -19,7 +20,7 @@ import jakarta.validation.constraints.NotBlank;
  *
  * @param name 매장명 (필수, 공백 불가)
  *
- * @see org.example.cloudpos.inventory.service.InventoryService#create(InventoryCreateRequest)
+ * @see InventoryServiceImpl#create(InventoryCreateRequest)
  * @since 1.0
  */
 public record InventoryCreateRequest(
