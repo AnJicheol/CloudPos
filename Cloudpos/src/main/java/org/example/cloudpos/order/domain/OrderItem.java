@@ -10,13 +10,17 @@ import static jakarta.persistence.FetchType.LAZY;
 
 /**
  * 주문에 포함된 개별 상품(Line Item)을 표현하는 엔티티입니다.
- * <p>
- * - {@code orderItemId} 는 외부 노출/식별용 비즈니스 키입니다.<br>
- * - {@code productId} 는 실제 상품을 식별하기 위한 코드입니다.<br>
- * - {@code price} 는 주문 시점의 금액을 스냅샷으로 보관합니다.<br>
- * - {@code paymentMethod} 는 현재 단계에서 결제 수단을 함께 받기 위한 임시 필드로,
- *   이후 결제/중간 테이블로 분리·통합될 예정입니다.
- * </p>
+ *
+ * <p>주문 시점의 상품, 수량, 단가 정보를 스냅샷 형태로 보관하며
+ * 상품 가격이 이후에 변경되더라도 주문 당시의 금액 정보를 유지하기 위한 용도로 사용됩니다.</p>
+ *
+ * <ul>
+ *     <li>{@code id} : 데이터베이스 내부용 기본 키</li>
+ *     <li>{@code order} : 이 항목이 소속된 주문</li>
+ *     <li>{@code productId} : 실제 상품을 식별하기 위한 상품 ID</li>
+ *     <li>{@code quantity} : 주문 수량</li>
+ *     <li>{@code price} : 주문 시점의 단가 스냅샷</li>
+ * </ul>
  */
 @Entity
 @Getter
@@ -34,7 +38,7 @@ public class OrderItem {
     )
     private Order order;
 
-    @Column(name = "product_Id", length = 26, nullable = false)
+    @Column(name = "product_id", length = 26, nullable = false)
     private String productId;
 
     @Column(name = "quantity", nullable = false)
