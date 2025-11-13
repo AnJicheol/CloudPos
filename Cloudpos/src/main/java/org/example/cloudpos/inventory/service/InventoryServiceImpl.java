@@ -128,9 +128,12 @@ public class InventoryServiceImpl {
      */
     @Transactional
     public void removeProduct(String inventoryId, String productId) {
-        long deleted = inventoryRepo.deleteByInventoryIdAndProduct_ProductId(inventoryId, productId);
-        if (deleted == 0) {
-            throw new IllegalArgumentException("해당 매장에서 해당 상품을 찾을 수 없습니다.");
-        }
+        Inventory inventory = inventoryRepo
+                .findByInventoryIdAndProduct_ProductId(inventoryId, productId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 매장에서 해당 상품을 찾을 수 없습니다."));
+
+        // 하드 삭제 대신 매핑만 끊기
+        inventory.clearProduct();
+        // @Transactional 덕분에 트랜잭션 끝날 때 update 쿼리로 product_id = null 반영됨
     }
 }

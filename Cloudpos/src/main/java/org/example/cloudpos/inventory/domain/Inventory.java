@@ -81,4 +81,9 @@ public class Inventory {
         this.name = name;
         this.product = product;
     }
+
+    /** 매장-상품 매핑을 논리적으로 제거 (product_id 를 null로 설정) */
+    public void clearProduct() {
+        this.product = null;
+    }
 }
