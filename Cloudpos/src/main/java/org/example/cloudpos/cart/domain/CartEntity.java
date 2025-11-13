@@ -20,7 +20,6 @@ import lombok.NoArgsConstructor;
  *     <li>{@code id} — 내부 DB 식별자 (PK)</li>
  *     <li>{@code cartId} — 외부 연동용 식별자(UUID 등)</li>
  *     <li>{@code userId} — 장바구니 소유자 ID</li>
- *     <li>{@code state} — 장바구니 FSM 상태 (예: EMPTY, ACTIVE, CLOSED)</li>
  * </ul>
  *
  * <p>
