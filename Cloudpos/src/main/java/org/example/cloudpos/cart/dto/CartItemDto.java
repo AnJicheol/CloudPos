@@ -3,7 +3,7 @@ package org.example.cloudpos.cart.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.example.cloudpos.product.dto.ProductSummaryDto;
+
 /**
 
  * 장바구니 내 단일 상품 항목을 표현하는 DTO입니다.
@@ -30,7 +30,7 @@ import org.example.cloudpos.product.dto.ProductSummaryDto;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CartItemDto {
-    private ProductSummaryDto product;
+    private ProductSummary product;
     private int quantity;
 
 }

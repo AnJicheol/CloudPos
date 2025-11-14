@@ -1,12 +1,12 @@
 package org.example.cloudpos.cart.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.cloudpos.cart.api.ProductSummaryHandlerApi;
 import org.example.cloudpos.cart.domain.CartState;
 import org.example.cloudpos.cart.dto.CartItemDto;
+import org.example.cloudpos.cart.dto.ProductSummary;
 import org.example.cloudpos.cart.exception.CartExpiredException;
 import org.example.cloudpos.cart.fsm.CartEvent;
-import org.example.cloudpos.product.dto.ProductSummaryDto;
-import org.example.cloudpos.product.service.ProductService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -70,7 +70,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class CartService {
     private final RedisTemplate<String, String> redisTemplate;
-    private final ProductService productService;
+    private final ProductSummaryHandlerApi productSummaryHandlerApi;
     private static final Duration TTL=Duration.ofMinutes(5);
 
     private String itemsKey(String cartId) { return "cart:" + cartId + ":items"; }
@@ -215,7 +215,7 @@ public class CartService {
             int qty = (qStr == null) ? 0 : Integer.parseInt(qStr);
             if (qty < 1) continue;
 
-            ProductSummaryDto p = productService.findSummaryByProductId(pid);
+            ProductSummary p = productSummaryHandlerApi.getProductSummary(pid);
             if (p == null) {
                 continue;
             }
