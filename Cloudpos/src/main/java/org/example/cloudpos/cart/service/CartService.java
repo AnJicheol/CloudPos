@@ -3,7 +3,9 @@ package org.example.cloudpos.cart.service;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.cart.api.ProductSummaryHandlerApi;
 import org.example.cloudpos.cart.domain.CartState;
+import org.example.cloudpos.cart.domain.UlidGenerator;
 import org.example.cloudpos.cart.dto.CartItemDto;
+import org.example.cloudpos.cart.dto.CreateCartResponse;
 import org.example.cloudpos.cart.dto.ProductSummary;
 import org.example.cloudpos.cart.exception.CartExpiredException;
 import org.example.cloudpos.cart.fsm.CartEvent;
@@ -115,9 +117,14 @@ public class CartService {
     /**
      * 주어진 cartId로 새로운 장바구니를 생성한다.
      * 이미 존재하면 아무 작업도 하지 않는다.
+     *
+     * @return
      */
-    public void createCart(String cartId) {
+    public CreateCartResponse createCart() {
+        String cartId = UlidGenerator.generate();
+
         redisTemplate.opsForValue().setIfAbsent(stateKey(cartId), CartState.EMPTY.name(), TTL);
+        return new CreateCartResponse(cartId);
     }
 
     /**

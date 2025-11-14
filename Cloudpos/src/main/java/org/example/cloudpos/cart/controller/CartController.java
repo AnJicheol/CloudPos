@@ -63,9 +63,7 @@ public class CartController {
     )
     @PostMapping
     public ResponseEntity<CreateCartResponse> createCart() {
-        String cartId = UlidGenerator.generate();
-        cartService.createCart(cartId);
-        return ResponseEntity.ok(new CreateCartResponse(cartId));
+        return ResponseEntity.ok(cartService.createCart());
     }
 
     @Operation(
