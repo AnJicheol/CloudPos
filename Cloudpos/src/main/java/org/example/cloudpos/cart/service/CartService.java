@@ -120,19 +120,28 @@ public class CartService {
         }
     }
 
-
-    public boolean createCart(String cartId) {
+    /**
+     * 주어진 cartId로 새로운 장바구니를 생성한다.
+     * 이미 존재하면 아무 작업도 하지 않는다.
+     */
+    public void createCart(String cartId) {
         redisTemplate.opsForValue().setIfAbsent(stateKey(cartId), CartState.EMPTY.name(), TTL);
-        return true;
     }
 
+    /**
+     * 장바구니의 현재 상태를 조회한다.
+     * 상태 키가 없으면 EMPTY를 반환한다.
+     */
     public CartState getState(String cartId){
         String s = redisTemplate.opsForValue().get(stateKey(cartId));
         return (s == null) ? CartState.EMPTY : CartState.valueOf(s);
     }
 
-
-    public boolean addFirstTime(String cartId, String productId) {
+    /**
+     * 장바구니에 상품을 처음 추가할 때 호출된다.
+     * itemset/items/qty 초기 등록 및 TTL 갱신을 수행한다.
+     */
+    public void addFirstTime(String cartId, String productId) {
         requireMutableCart(cartId);
 
         Long added = redisTemplate.opsForSet().add(itemSetKey(cartId), productId);
@@ -146,10 +155,12 @@ public class CartService {
         transition(cartId, CartEvent.ADD_ITEM);
         refreshTtl(cartId, productId);
 
-        return true;
     }
 
-
+    /**
+     * 이미 담긴 상품의 수량을 delta 만큼 변경한다.
+     * 수량이 1 미만이 되면 변경하지 않고 false를 반환한다.
+     */
     public boolean changeQuantity(String cartId, String productId, int delta) {
         requireMutableCart(cartId);
 
@@ -167,7 +178,12 @@ public class CartService {
 
     }
 
-    public boolean removeItem(String cartId, String productId) {
+    /**
+     * 장바구니에서 해당 상품을 완전히 제거한다.
+     * qty/itemset/items 키를 모두 삭제한다.
+     */
+
+    public void removeItem(String cartId, String productId) {
         requireMutableCart(cartId);
 
         redisTemplate.delete(qtyKey(cartId, productId));
@@ -178,9 +194,12 @@ public class CartService {
 
         refreshTtl(cartId);
 
-        return true;
     }
 
+    /**
+     * 장바구니의 모든 상품과 수량을 조회하여 DTO로 반환한다.
+     * ProductSummaryHandlerApi를 통해 상품 정보를 조회한다.
+     */
     public List<CartItemDto> getAll(String cartId) {
         ensureAlive(cartId);
 
@@ -207,6 +226,10 @@ public class CartService {
         return result;
     }
 
+    /**
+     * 결제를 시작한다.
+     * 빈 장바구니일 경우 예외를 발생시킨다.
+     */
     public void beginCheckout(String cartId) {
 
         ensureAlive(cartId);
@@ -223,6 +246,10 @@ public class CartService {
 
     }
 
+    /**
+     * 결제 성공 처리.
+     * CHECKOUT_PENDING 상태에서만 호출 가능하며 장바구니 데이터를 삭제한다.
+     */
     public void paymentSuccess(String cartId) {
 
         requireCheckoutPending(cartId, "결제 성공" );
@@ -233,6 +260,10 @@ public class CartService {
 
     }
 
+    /**
+     * 결제 취소 처리.
+     * CHECKOUT_PENDING 상태를 IN_PROGRESS로 되돌린다.
+     */
     public void cancelCheckout(String cartId) {
 
         requireCheckoutPending(cartId, "결제 취소" );
@@ -243,6 +274,10 @@ public class CartService {
 
     }
 
+    /**
+     * 장바구니에 속한 모든 Redis 키를 삭제한다.
+     * (state, items, itemset, qty)
+     */
     public void clear(String cartId) {
         Set<String> pids = redisTemplate.opsForSet().members(itemSetKey(cartId));
 
