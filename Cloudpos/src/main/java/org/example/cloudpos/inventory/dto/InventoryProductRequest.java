@@ -1,6 +1,6 @@
 package org.example.cloudpos.inventory.dto;
 
-import jakarta.validation.constraints.NotNull;
+import org.hibernate.validator.constraints.NotBlank;
 
 /**
  * 매장(Inventory)에 상품을 추가할 때 사용하는 요청 DTO.
@@ -14,15 +14,16 @@ import jakarta.validation.constraints.NotNull;
  * <h2>예시 요청(JSON)</h2>
  * <pre>{@code
  * {
- *   "productId": 101
+ *   "productId": "PRD_01HXXXXXX"
  * }
  * }</pre>
  *
- * @param productId 추가할 상품의 기본키 ID (필수)
+ * @param productId 추가할 상품의 식별자(비즈니스 키, ULID 문자열 등)
  *
- * @see org.example.cloudpos.inventory.service.InventoryService#addProduct(String, Long)
+ * @see org.example.cloudpos.inventory.service.InventoryService#addProduct(String, String)
  * @since 1.0
  */
 public record InventoryProductRequest(
-        @NotNull String productId
+        @NotBlank String productId
 ) {}
+
