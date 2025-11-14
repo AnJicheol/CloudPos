@@ -12,6 +12,10 @@ import org.example.cloudpos.cart.domain.UlidGenerator;
 import org.example.cloudpos.cart.service.CartService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.example.cloudpos.cart.dto.CreateCartResponse;
+import org.example.cloudpos.cart.dto.AddFirstRequest;
+import org.example.cloudpos.cart.dto.GenericStateResponse;
+import org.example.cloudpos.cart.dto.QuantityUpdateResponse;
 
 import java.util.List;
 /**
@@ -49,11 +53,6 @@ import java.util.List;
 public class CartController {
 
     private final CartService cartService;
-
-    public record CreateCartResponse(String cartId, String state) {}
-    public record AddFirstRequest(String productId) {}
-    public record GenericStateResponse(String state) {}
-    public record QuantityUpdateResponse(int quantity, String state) {}
 
     @Operation(
             summary = "장바구니 생성",
