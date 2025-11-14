@@ -155,11 +155,14 @@ public class CartService {
      * 이미 담긴 상품의 수량을 delta 만큼 변경한다.
      * 수량이 1 미만이 되면 변경하지 않고 false를 반환한다.
      */
-    public boolean changeQuantity(String cartId, String productId, int delta) {
+    public int changeQuantity(String cartId, String productId, int delta) {
         requireMutableCart(cartId);
 
         int cur=getQuantity(cartId, productId);
-        if((cur+delta)<1)  return false;
+        int next=cur+delta;
+        if(next<1) {
+            throw new IllegalStateException("상품의 최소 수량은 1개입니다.");
+        }
 
         redisTemplate.opsForHash().increment(itemsHashKey(cartId), productId, delta);
 
@@ -168,7 +171,7 @@ public class CartService {
 
         refreshTtl(cartId);
 
-        return true;
+        return next;
 
     }
 
