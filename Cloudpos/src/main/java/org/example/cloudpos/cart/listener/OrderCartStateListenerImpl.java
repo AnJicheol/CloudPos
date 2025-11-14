@@ -5,7 +5,7 @@ import org.example.cloudpos.cart.domain.CartState;
 import org.example.cloudpos.cart.dto.CartItemDto;
 import org.example.cloudpos.cart.exception.InvalidCartStateException;
 import org.example.cloudpos.cart.service.CartCheckoutServiceImpl;
-import org.example.cloudpos.cart.service.CartService;
+import org.example.cloudpos.cart.service.CartServiceImpl;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -24,26 +24,26 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderCartStateListenerImpl implements OrderCartStateListener {
 
-    private final CartCheckoutServiceImpl cartCheckoutServiceImpl;
-    private final CartService cartService;
+    private final CartCheckoutServiceImpl cartCheckoutService;
+    private final CartServiceImpl cartService;
 
     @Override
     public void onClose(String cartId) {
-        cartCheckoutServiceImpl.paymentSuccess(cartId);
+        cartCheckoutService.paymentSuccess(cartId);
     }
 
     @Override
     public void onOpen(String cartId) {
-        cartCheckoutServiceImpl.cancelCheckout(cartId);
+        cartCheckoutService.cancelCheckout(cartId);
     }
 
     @Override
     public List<CartItemDto> onPayment(String cartId) {
-        if (cartCheckoutServiceImpl.getState(cartId) != CartState.CHECKOUT_PENDING) {
+        if (cartCheckoutService.getState(cartId) != CartState.CHECKOUT_PENDING) {
             throw new InvalidCartStateException("장바구니가 결제 가능한 상태가 아닙니다.");
 
         }
-        cartCheckoutServiceImpl.beginCheckout(cartId);
+        cartCheckoutService.beginCheckout(cartId);
         return cartService.getAll(cartId);
     }
 

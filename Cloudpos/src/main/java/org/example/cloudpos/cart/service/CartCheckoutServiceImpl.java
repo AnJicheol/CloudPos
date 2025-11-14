@@ -1,7 +1,6 @@
 package org.example.cloudpos.cart.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.cloudpos.cart.api.ProductSummaryHandlerApi;
 import org.example.cloudpos.cart.domain.CartState;
 import org.example.cloudpos.cart.exception.CartExpiredException;
 import org.example.cloudpos.cart.fsm.CartEvent;
@@ -15,7 +14,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class CartCheckoutServiceImpl {
+public class CartCheckoutServiceImpl implements CartCheckoutService{
 
     private String itemsHashKey(String cartId) { return "cart:" + cartId + ":items"; }
     private String itemSetKey(String cartId) { return "cart:" + cartId + ":itemset"; }

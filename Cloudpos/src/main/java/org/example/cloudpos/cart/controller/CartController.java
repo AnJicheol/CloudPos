@@ -7,9 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.cart.dto.CartItemDto;
-import org.example.cloudpos.cart.domain.UlidGenerator;
-import org.example.cloudpos.cart.service.CartCheckoutServiceImpl;
-import org.example.cloudpos.cart.service.CartService;
+import org.example.cloudpos.cart.service.CartServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.example.cloudpos.cart.dto.CreateCartResponse;
@@ -41,7 +39,7 @@ import java.util.List;
  * </ul>
  *
  * <p><b>비고</b><br>
- * 장바구니 로직은 {@link CartService}에서 처리하며,
+ * 장바구니 로직은 {@link CartServiceImpl}에서 처리하며,
  * 식별자는 {@link org.example.cloudpos.cart.domain.UlidGenerator}로 생성됩니다.
  * </p>
 
@@ -51,7 +49,7 @@ import java.util.List;
 @RequestMapping("/api/carts")
 public class CartController {
 
-    private final CartService cartService;
+    private final CartServiceImpl cartService;
 
     @Operation(
             summary = "장바구니 생성",

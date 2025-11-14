@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.cart.domain.CartState;
 import org.example.cloudpos.cart.dto.CartItemDto;
 import org.example.cloudpos.cart.service.CartCheckoutServiceImpl;
-import org.example.cloudpos.cart.service.CartService;
+import org.example.cloudpos.cart.service.CartServiceImpl;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,24 +20,24 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CartCheckoutAppService implements CartCheckoutUseCase {
 
-    private final CartCheckoutServiceImpl cartCheckoutServiceImpl;
-    private final CartService cartService;
+    private final CartCheckoutServiceImpl cartCheckoutService;
+    private final CartServiceImpl cartService;
 
     @Override
     public List<CartItemDto>  beginCheckout(String cartId) {
-        if (cartCheckoutServiceImpl.getState(cartId) != CartState.CHECKOUT_PENDING) {
-            cartCheckoutServiceImpl.beginCheckout(cartId);
+        if (cartCheckoutService.getState(cartId) != CartState.CHECKOUT_PENDING) {
+            cartCheckoutService.beginCheckout(cartId);
         }
         return cartService.getAll(cartId);
     }
 
     @Override
     public void paymentSuccess(String cartId) {
-        cartCheckoutServiceImpl.paymentSuccess(cartId);
+        cartCheckoutService.paymentSuccess(cartId);
     }
 
     @Override
     public void cancelCheckout(String cartId) {
-        cartCheckoutServiceImpl.cancelCheckout(cartId);
+        cartCheckoutService.cancelCheckout(cartId);
     }
 }
