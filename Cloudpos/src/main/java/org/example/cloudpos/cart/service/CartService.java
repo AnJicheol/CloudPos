@@ -120,6 +120,19 @@ public class CartService {
         return Optional.ofNullable(byEvent.get(event));
     }
 
+    private void refreshTtl(String cartId, String productIdOrNull) {
+        redisTemplate.expire(stateKey(cartId), TTL);
+        redisTemplate.expire(itemsKey(cartId), TTL);
+        redisTemplate.expire(itemSetKey(cartId), TTL);
+        if(productIdOrNull != null){
+            redisTemplate.expire(qtyKey(cartId, productIdOrNull), TTL);
+        }
+    }
+
+    private void refreshTtl(String cartId) {
+        refreshTtl(cartId, null);
+    }
+
     private void requireMutableCart(String cartId){
         ensureAlive(cartId);
         CartState state = getState(cartId);
@@ -160,7 +173,8 @@ public class CartService {
         }
 
         transition(cartId, CartEvent.ADD_ITEM);
-        redisTemplate.expire(qtyKey(cartId, productId), TTL);
+        refreshTtl(cartId, productId);
+
         return true;
     }
 
@@ -173,7 +187,8 @@ public class CartService {
 
         transition(cartId, CartEvent.ADD_ITEM);
 
-        redisTemplate.expire(qtyKey(cartId, productId), TTL);
+        refreshTtl(cartId, productId);
+
         return true;
     }
 
@@ -188,7 +203,8 @@ public class CartService {
 
         transition(cartId, CartEvent.REMOVE_ITEM);
 
-        redisTemplate.expire(qtyKey(cartId, productId), TTL);
+        refreshTtl(cartId, productId);
+
         return true;
     }
 
@@ -199,6 +215,8 @@ public class CartService {
         redisTemplate.opsForSet().remove(itemSetKey(cartId), productId);
         redisTemplate.opsForList().remove(itemsKey(cartId),0,productId);
         transition(cartId, CartEvent.REMOVE_ITEM);
+        refreshTtl(cartId);
+
         return true;
     }
 
@@ -239,6 +257,8 @@ public class CartService {
         }
 
         transition(cartId, CartEvent.CHECKOUT);
+        refreshTtl(cartId);
+
 
     }
 
@@ -258,6 +278,8 @@ public class CartService {
 
 
         transition(cartId, CartEvent.CANCEL);
+        refreshTtl(cartId);
+
     }
 
     public void clear(String cartId) {
@@ -288,9 +310,8 @@ public class CartService {
     private void transition(String cartId, CartEvent event) {
         CartState cur = getState(cartId);
         CartState next = nextStateOpt(cur, event).orElse(cur);
-        redisTemplate.opsForValue().set(stateKey(cartId), next.name(), TTL);
-        redisTemplate.expire(itemsKey(cartId), TTL);
-        redisTemplate.expire(itemSetKey(cartId), TTL);
+        redisTemplate.opsForValue().set(stateKey(cartId), next.name());
+
     }
 
     public int getQuantity(String cartId, String productId) {
