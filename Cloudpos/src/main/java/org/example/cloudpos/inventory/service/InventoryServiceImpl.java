@@ -41,7 +41,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class InventoryServiceImpl {
+public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryRepository inventoryRepo;
     private final ProductRepository productRepo;
@@ -54,6 +54,7 @@ public class InventoryServiceImpl {
      * @param req 매장 생성 요청 DTO
      * @return 생성된 매장의 ULID
      */
+    @Override
     public String create(InventoryCreateRequest req) {
         String ulid = UlidCreator.getUlid().toString();
         Inventory inventory = new Inventory(ulid, req.name(), null);
@@ -74,6 +75,7 @@ public class InventoryServiceImpl {
      * @throws InventoryNotFoundException 지정한 매장이 존재하지 않을 경우
      * @throws DuplicateStoreProductException 동일 상품이 이미 등록된 경우
      */
+    @Override
     @Transactional
     public void addProduct(String inventoryId, String productId) {
         // 상품 존재 확인
@@ -104,6 +106,7 @@ public class InventoryServiceImpl {
      * @return 매장 내 상품 정보를 담은 DTO 목록
      * @throws IllegalArgumentException 지정한 매장이 존재하지 않을 경우
      */
+    @Override
     @Transactional(readOnly = true)
     public List<InventoryProductResponse> listProducts(String inventoryId) {
         // 매장 존재 검증
@@ -126,6 +129,7 @@ public class InventoryServiceImpl {
      * @param productId 상품 기본키 ID
      * @throws IllegalArgumentException 매장이 존재하지 않거나 해당 상품이 매장에 없을 경우
      */
+    @Override
     @Transactional
     public void removeProduct(String inventoryId, String productId) {
         long deleted = inventoryRepo.deleteByInventoryIdAndProduct_ProductId(inventoryId, productId);
