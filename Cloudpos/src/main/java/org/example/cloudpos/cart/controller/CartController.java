@@ -48,7 +48,7 @@ import java.util.List;
 @RequestMapping("/api/carts")
 public class CartController {
 
-    private final CartService cartServiceImpl;
+    private final CartService cartService;
 
     public record CreateCartResponse(String cartId, String state) {}
     public record AddFirstRequest(String productId) {}
@@ -67,8 +67,8 @@ public class CartController {
     @PostMapping
     public ResponseEntity<CreateCartResponse> createCart() {
         String cartId = UlidGenerator.generate();
-        cartServiceImpl.createCart(cartId);
-        CartState state = cartServiceImpl.getState(cartId);
+        cartService.createCart(cartId);
+        CartState state = cartService.getState(cartId);
         return ResponseEntity.ok(new CreateCartResponse(cartId, state.name()));
     }
 
@@ -85,9 +85,9 @@ public class CartController {
     @ApiResponse(responseCode = "410", description = "만료된 장바구니")
     @PostMapping("/{cartId}/items:first")
     public ResponseEntity<QuantityUpdateResponse> addFirst(@PathVariable String cartId, @RequestBody AddFirstRequest request) {
-        cartServiceImpl.addFirstTime(cartId, request.productId);
-        int qty = cartServiceImpl.getQuantity(cartId, request.productId);
-        return ResponseEntity.ok(new QuantityUpdateResponse(qty, cartServiceImpl.getState(cartId).name()));
+        cartService.addFirstTime(cartId, request.productId);
+        int qty = cartService.getQuantity(cartId, request.productId);
+        return ResponseEntity.ok(new QuantityUpdateResponse(qty, cartService.getState(cartId).name()));
     }
 
     @Operation(
@@ -110,12 +110,12 @@ public class CartController {
     )
     @PostMapping("/{cartId}/items/{productId}")
     public ResponseEntity<QuantityUpdateResponse> changeQuantity(@PathVariable String cartId, @PathVariable String productId, @RequestParam int delta) {
-        boolean ok = cartServiceImpl.changeQuantity(cartId, productId,delta);
+        boolean ok = cartService.changeQuantity(cartId, productId,delta);
         if (!ok) {
             throw new IllegalStateException("상품의 최소소량은 1개 입니다.");
         }
-        int qty = cartServiceImpl.getQuantity(cartId, productId);
-        return ResponseEntity.ok(new QuantityUpdateResponse(qty, cartServiceImpl.getState(cartId).name()));
+        int qty = cartService.getQuantity(cartId, productId);
+        return ResponseEntity.ok(new QuantityUpdateResponse(qty, cartService.getState(cartId).name()));
     }
 
     @Operation(
@@ -131,8 +131,8 @@ public class CartController {
     @ApiResponse(responseCode = "410", description = "만료된 장바구니")
     @DeleteMapping("/{cartId}/items/{productId}")
     public ResponseEntity<GenericStateResponse> removeItem(@PathVariable String cartId, @PathVariable String productId) {
-        cartServiceImpl.removeItem(cartId, productId);
-        return ResponseEntity.ok(new GenericStateResponse(cartServiceImpl.getState(cartId).name()));
+        cartService.removeItem(cartId, productId);
+        return ResponseEntity.ok(new GenericStateResponse(cartService.getState(cartId).name()));
     }
 
     @Operation(
@@ -147,7 +147,7 @@ public class CartController {
     @ApiResponse(responseCode = "410", description = "만료된 장바구니")
     @GetMapping("/{cartId}")
     public ResponseEntity<List<CartItemDto>> getCart(@PathVariable String cartId) {
-        return ResponseEntity.ok(cartServiceImpl.getAll(cartId));
+        return ResponseEntity.ok(cartService.getAll(cartId));
     }
 
     @Operation(
@@ -158,7 +158,7 @@ public class CartController {
     @ApiResponse(responseCode = "410", description = "만료된 장바구니")
     @DeleteMapping("/{cartId}")
     public ResponseEntity<Void> clear(@PathVariable String cartId) {
-        cartServiceImpl.clear(cartId);
+        cartService.clear(cartId);
         return ResponseEntity.noContent().build();
     }
 }
