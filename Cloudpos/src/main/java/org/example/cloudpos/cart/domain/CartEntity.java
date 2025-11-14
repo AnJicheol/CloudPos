@@ -20,7 +20,6 @@ import lombok.NoArgsConstructor;
  *     <li>{@code id} — 내부 DB 식별자 (PK)</li>
  *     <li>{@code cartId} — 외부 연동용 식별자(UUID 등)</li>
  *     <li>{@code userId} — 장바구니 소유자 ID</li>
- *     <li>{@code state} — 장바구니 FSM 상태 (예: EMPTY, ACTIVE, CLOSED)</li>
  * </ul>
  *
  * <p>
@@ -41,21 +40,7 @@ public class CartEntity {
     @Column(name="cart_id", nullable = false, unique = true, length=26)
     private String cartId;
 
-    @Column(name="user_id", nullable = false)
-    private Long userId;
+    @Column(name="inventory_id", nullable = false)
+    private Long inventoryId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name="state", nullable=false)
-    private CartState state= CartState.EMPTY;
-    @PrePersist
-    void prePersist() {
-        if (cartId == null) {
-            cartId = UlidGenerator.generate(); // domain/util
-        }
-    }
-
-    public CartEntity(String cartId, Long userId) {
-        this.cartId = cartId;
-        this.userId = userId;
-    }
 }
