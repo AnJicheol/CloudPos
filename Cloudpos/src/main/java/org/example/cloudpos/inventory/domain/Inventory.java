@@ -70,15 +70,37 @@ public class Inventory {
     private Product product;
 
     /**
+     * 매장 내 상품의 상태.
+     *
+     * <p>상품이 실제로 어떤 매장에서 판매되었는지는
+     * {@link #product} 연관관계를 유지한 채,
+     * 이 상태 값으로 활성/제거 여부를 관리합니다.</p>
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private InventoryProductStatus status = InventoryProductStatus.ACTIVE;
+
+    /**
      * 새 인벤토리 레코드를 생성합니다.
      *
      * @param inventoryId 매장 외부 식별자 (ULID)
      * @param name 매장명
-     * @param product 등록할 상품 엔티티
+     * @param product 등록할 상품 엔티티 (헤더용 레코드일 경우 {@code null} 가능)
      */
     public Inventory(String inventoryId, String name, Product product) {
         this.inventoryId = inventoryId;
         this.name = name;
         this.product = product;
+        this.status = InventoryProductStatus.ACTIVE;
+    }
+
+    /** 매장에서 해당 상품을 제거(소프트 삭제) 처리합니다. */
+    public void markRemoved() {
+        this.status = InventoryProductStatus.REMOVED;
+    }
+
+    /** 제거되었던 상품을 다시 활성화합니다. */
+    public void markActive() {
+        this.status = InventoryProductStatus.ACTIVE;
     }
 }

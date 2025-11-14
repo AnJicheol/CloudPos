@@ -3,6 +3,7 @@ package org.example.cloudpos.inventory.service;
 import com.github.f4b6a3.ulid.UlidCreator;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.inventory.domain.Inventory;
+import org.example.cloudpos.inventory.domain.InventoryProductStatus;
 import org.example.cloudpos.inventory.dto.InventoryCreateRequest;
 import org.example.cloudpos.inventory.dto.InventoryProductResponse;
 import org.example.cloudpos.inventory.exception.DuplicateStoreProductException;
@@ -66,14 +67,17 @@ public class InventoryServiceImpl implements InventoryService {
      * 매장에 상품을 추가합니다.
      *
      * <p>본사 상품(Product)을 참조하여 매장에 등록합니다.
-     * 하나의 상품은 하나의 매장에만 등록될 수 있으며,
-     * 중복 등록 시 {@link DuplicateStoreProductException}이 발생합니다.</p>
+     * 하나의 상품은 하나의 매장에만 등록될 수 있습니다.</p>
+     *
+     * <p>이미 동일 상품 매핑이 존재하는 경우,
+     * 상태가 {@code REMOVED}라면 다시 {@code ACTIVE}로 복원하며,
+     * 이미 {@code ACTIVE}라면 {@link DuplicateStoreProductException}을 발생시킵니다.</p>
      *
      * @param inventoryId 매장 외부 식별자 (ULID)
-     * @param productId 등록할 상품의 ID
-     * @throws ProductNotFoundException 지정한 상품이 존재하지 않을 경우
-     * @throws InventoryNotFoundException 지정한 매장이 존재하지 않을 경우
-     * @throws DuplicateStoreProductException 동일 상품이 이미 등록된 경우
+     * @param productId   등록할 상품의 ID
+     * @throws ProductNotFoundException    지정한 상품이 존재하지 않을 경우
+     * @throws InventoryNotFoundException  지정한 매장이 존재하지 않을 경우
+     * @throws DuplicateStoreProductException 동일 상품이 이미 ACTIVE 상태로 등록된 경우
      */
     @Override
     @Transactional
@@ -82,19 +86,31 @@ public class InventoryServiceImpl implements InventoryService {
         Product product = productRepo.findByProductId(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
-        // 매장 존재 확인
-        Inventory inventory = inventoryRepo.findFirstByInventoryId(inventoryId)
-                .orElseThrow(() -> new InventoryNotFoundException(inventoryId));
-
-        // 매장 이름 스냅샷 복제 후 저장
-        Inventory newRow = new Inventory(inventoryId, inventory.getName(), product);
-        try {
-            inventoryRepo.save(newRow);
-        } catch (DataIntegrityViolationException e) {
-            // UNIQUE 제약 위반 시 도메인 예외로 변환
-            throw new DuplicateStoreProductException(inventoryId, productId, e);
+        // 매장 존재 확인 (헤더 레코드 기준)
+        Inventory header = inventoryRepo.findFirstByInventoryId(inventoryId);
+        if (header == null) {
+            throw new InventoryNotFoundException(inventoryId);
         }
+
+        // 기존 매핑 있는지 확인
+        Inventory existing =
+                inventoryRepo.findByInventoryIdAndProduct_ProductId(inventoryId, productId);
+
+        if (existing != null) {
+            // 예전에 제거된 상태면 다시 활성화
+            if (existing.getStatus() == InventoryProductStatus.REMOVED) {
+                existing.markActive();
+                return;
+            }
+            // 이미 ACTIVE면 중복 등록 예외
+            throw new DuplicateStoreProductException(inventoryId, productId);
+        }
+
+        // 완전히 새로운 매핑이면 새 행 생성
+        Inventory newRow = new Inventory(inventoryId, header.getName(), product);
+        inventoryRepo.save(newRow);
     }
+
 
     /**
      * 특정 매장에 등록된 상품 목록을 조회합니다.
@@ -102,19 +118,23 @@ public class InventoryServiceImpl implements InventoryService {
      * <p>매장이 존재하지 않으면 예외를 던지며,
      * 조회 시 N+1 문제를 방지하기 위해 {@code fetch join}을 사용합니다.</p>
      *
+     * <p>상태가 {@code ACTIVE}인 매장-상품 매핑만 조회되므로,
+     * 소프트 삭제된({@code REMOVED}) 상품은 결과에 포함되지 않습니다.</p>
+     *
      * @param inventoryId 매장 외부 식별자 (ULID)
-     * @return 매장 내 상품 정보를 담은 DTO 목록
-     * @throws IllegalArgumentException 지정한 매장이 존재하지 않을 경우
+     * @return 매장 내 ACTIVE 상태 상품 정보를 담은 DTO 목록
+     * @throws InventoryNotFoundException 지정한 매장이 존재하지 않을 경우
      */
     @Override
     @Transactional(readOnly = true)
     public List<InventoryProductResponse> listProducts(String inventoryId) {
         // 매장 존재 검증
         if (!inventoryRepo.existsByInventoryId(inventoryId)) {
-            throw new IllegalArgumentException("해당 매장이 존재하지 않습니다.");
+            throw new InventoryNotFoundException(inventoryId);
         }
-        // N+1 방지용 fetch join
-        return inventoryRepo.findAllWithProductByInventoryId(inventoryId).stream()
+
+        // ACTIVE 인 것만 조회
+        return inventoryRepo.findActiveProductsByInventoryId(inventoryId).stream()
                 .map(inv -> InventoryProductResponse.from(inv.getProduct()))
                 .toList();
     }
@@ -122,19 +142,26 @@ public class InventoryServiceImpl implements InventoryService {
     /**
      * 매장에서 특정 상품을 제거합니다.
      *
-     * <p>매장-상품 매핑 테이블에서 해당 상품을 삭제하며,
-     * 매장이나 상품 엔티티 자체에는 영향을 주지 않습니다.</p>
+     * <p>매장-상품 매핑 행을 삭제하거나 연관관계를 끊지 않고,
+     * 상태를 {@code REMOVED}로 변경하는 방식의 소프트 삭제를 수행합니다.</p>
+     *
+     * <p>소프트 삭제된 상품은 이후 {@link #listProducts(String)} 조회 시
+     * 결과에 포함되지 않습니다.</p>
      *
      * @param inventoryId 매장 외부 식별자 (ULID)
-     * @param productId 상품 기본키 ID
-     * @throws IllegalArgumentException 매장이 존재하지 않거나 해당 상품이 매장에 없을 경우
+     * @param productId   상품 식별자
+     * @throws IllegalArgumentException 지정한 매장에서 해당 상품 매핑을 찾을 수 없을 경우
      */
     @Override
     @Transactional
     public void removeProduct(String inventoryId, String productId) {
-        long deleted = inventoryRepo.deleteByInventoryIdAndProduct_ProductId(inventoryId, productId);
-        if (deleted == 0) {
+        Inventory inventory =
+                inventoryRepo.findByInventoryIdAndProduct_ProductId(inventoryId, productId);
+
+        if (inventory == null) {
             throw new IllegalArgumentException("해당 매장에서 해당 상품을 찾을 수 없습니다.");
         }
+
+        inventory.markRemoved(); // product는 그대로, status만 REMOVED
     }
 }

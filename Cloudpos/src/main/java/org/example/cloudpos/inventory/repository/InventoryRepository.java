@@ -32,12 +32,11 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     /**
      * 주어진 {@code inventoryId}에 해당하는 매장의 행 중 하나를 조회합니다.
      *
-     * <p>매장 이름을 얻거나 매장 존재 여부를 확인할 때 사용됩니다.</p>
-     *
      * @param inventoryId 매장 외부 식별자 (ULID)
-     * @return 매장 레코드 중 하나 (없으면 빈 Optional)
+     * @return 매장 레코드 중 하나, 없으면 {@code null}
      */
-    Optional<Inventory> findFirstByInventoryId(String inventoryId);
+    Inventory findFirstByInventoryId(String inventoryId);
+
 
     /**
      * 주어진 매장 ULID가 존재하는지 여부를 확인합니다.
@@ -48,21 +47,28 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     boolean existsByInventoryId(String inventoryId);
 
     /**
-     * 특정 매장에 등록된 모든 상품을 조회하되,
-     * N+1 문제를 방지하기 위해 {@code product} 엔티티를 즉시 로딩(fetch join)합니다.
+     * 지정한 매장에서 ACTIVE 상태인 상품들만 조회합니다.
+     *
+     * <p>상품 엔티티를 fetch join하여 N+1 문제를 방지합니다.</p>
      *
      * @param inventoryId 매장 외부 식별자 (ULID)
-     * @return 상품이 포함된 인벤토리 목록
+     * @return ACTIVE 상태의 상품이 포함된 인벤토리 목록
      */
-    @Query("select i from Inventory i join fetch i.product p where i.inventoryId = :inventoryId")
-    List<Inventory> findAllWithProductByInventoryId(String inventoryId);
+    @Query("""
+        select i
+        from Inventory i
+        join fetch i.product p
+        where i.inventoryId = :inventoryId
+          and i.status = org.example.cloudpos.inventory.domain.InventoryProductStatus.ACTIVE
+    """)
+    List<Inventory> findActiveProductsByInventoryId(String inventoryId);
 
     /**
-     * 지정된 매장에서 특정 상품을 제거합니다.
+     * 지정한 매장에서 지정한 상품 매핑을 조회합니다.
      *
      * @param inventoryId 매장 외부 식별자 (ULID)
-     * @param productId 상품 기본키 ID
-     * @return 삭제된 행의 개수
+     * @param productId   상품 식별자
+     * @return 매핑된 {@link Inventory} 엔티티, 없으면 {@code null}
      */
-    long deleteByInventoryIdAndProduct_ProductId(String inventoryId, String productId);
+    Inventory findByInventoryIdAndProduct_ProductId(String inventoryId, String productId);
 }
