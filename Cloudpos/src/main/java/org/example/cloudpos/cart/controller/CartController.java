@@ -6,12 +6,14 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudpos.cart.domain.CartState;
 import org.example.cloudpos.cart.dto.CartItemDto;
 import org.example.cloudpos.cart.domain.UlidGenerator;
 import org.example.cloudpos.cart.service.CartService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.example.cloudpos.cart.dto.CreateCartResponse;
+import org.example.cloudpos.cart.dto.AddFirstRequest;
+import org.example.cloudpos.cart.dto.QuantityUpdateResponse;
 
 import java.util.List;
 /**
@@ -50,11 +52,6 @@ public class CartController {
 
     private final CartService cartService;
 
-    public record CreateCartResponse(String cartId, String state) {}
-    public record AddFirstRequest(String productId) {}
-    public record GenericStateResponse(String state) {}
-    public record QuantityUpdateResponse(int quantity, String state) {}
-
     @Operation(
             summary = "장바구니 생성",
             description = "새로운 cartId를 생성하고 Redis에 초기 상태(EMPTY)로 저장합니다."
@@ -68,8 +65,7 @@ public class CartController {
     public ResponseEntity<CreateCartResponse> createCart() {
         String cartId = UlidGenerator.generate();
         cartService.createCart(cartId);
-        CartState state = cartService.getState(cartId);
-        return ResponseEntity.ok(new CreateCartResponse(cartId, state.name()));
+        return ResponseEntity.ok(new CreateCartResponse(cartId));
     }
 
     @Operation(
@@ -85,9 +81,9 @@ public class CartController {
     @ApiResponse(responseCode = "410", description = "만료된 장바구니")
     @PostMapping("/{cartId}/items:first")
     public ResponseEntity<QuantityUpdateResponse> addFirst(@PathVariable String cartId, @RequestBody AddFirstRequest request) {
-        cartService.addFirstTime(cartId, request.productId);
-        int qty = cartService.getQuantity(cartId, request.productId);
-        return ResponseEntity.ok(new QuantityUpdateResponse(qty, cartService.getState(cartId).name()));
+        cartService.addFirstTime(cartId, request.productId());
+        int qty = cartService.getQuantity(cartId, request.productId());
+        return ResponseEntity.ok(new QuantityUpdateResponse(qty));
     }
 
     @Operation(
@@ -115,7 +111,7 @@ public class CartController {
             throw new IllegalStateException("상품의 최소소량은 1개 입니다.");
         }
         int qty = cartService.getQuantity(cartId, productId);
-        return ResponseEntity.ok(new QuantityUpdateResponse(qty, cartService.getState(cartId).name()));
+        return ResponseEntity.ok(new QuantityUpdateResponse(qty));
     }
 
     @Operation(
@@ -123,17 +119,17 @@ public class CartController {
             description = "장바구니에서 지정한 상품을 완전히 제거합니다."
     )
     @ApiResponse(
-            responseCode = "200",
-            description = "제거 성공",
-            content = @Content(schema = @Schema(implementation = GenericStateResponse.class))
+            responseCode = "204",
+            description = "제거 성공"
     )
     @ApiResponse(responseCode = "409", description = "상태 규칙 위반")
     @ApiResponse(responseCode = "410", description = "만료된 장바구니")
     @DeleteMapping("/{cartId}/items/{productId}")
-    public ResponseEntity<GenericStateResponse> removeItem(@PathVariable String cartId, @PathVariable String productId) {
+    public ResponseEntity<Void> removeItem(@PathVariable String cartId, @PathVariable String productId) {
         cartService.removeItem(cartId, productId);
-        return ResponseEntity.ok(new GenericStateResponse(cartService.getState(cartId).name()));
+        return ResponseEntity.noContent().build();
     }
+
 
     @Operation(
             summary = "장바구니 조회",
