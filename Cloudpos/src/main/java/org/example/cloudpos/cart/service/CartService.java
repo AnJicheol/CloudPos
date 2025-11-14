@@ -25,7 +25,7 @@ import java.util.*;
  * <ul>
  *   <li><code>cart:{cartId}:items</code> — <i>List</i>: 담긴 상품의 <code>productId</code>를 순서대로 저장 (중복 허용/표시용)</li>
  *   <li><code>cart:{cartId}:itemset</code> — <i>Set</i>: 담긴 상품의 <code>productId</code> 집합 (존재 여부/중복 제거용)</li>
- *   <li><code>cart:{cartId}:qty:{productId}</code> — <i>String</i>: 해당 상품의 수량(정수) </li>
+ *   <li><code>cart:{cartId}:qty:{productId}</code> — <i>String</i>: 해당 상품의 수량(정수)</li>
  *   <li><code>cart:{cartId}:state</code> — <i>String</i>: 장바구니 상태({@link org.example.cloudpos.cart.domain.CartState})</li>
  * </ul>
  *
@@ -41,23 +41,32 @@ import java.util.*;
  *
  * <p><b>주요 동작</b></p>
  * <ul>
- *   <li>{@code createCart} — 초기 상태키를 {@code EMPTY}로 생성</li>
- *   <li>{@code addFirstTime}/{@code addOne}/{@code removeOne}/{@code removeItem} — 아이템/수량 변경 및 TTL 연장</li>
- *   <li>{@code getAll} — Redis의 아이템 식별자들을 Product 서비스 요약정보로 매핑하여 응답</li>
- *   <li>{@code beginCheckout}/{@code paymentSuccess}/{@code cancelCheckout} — 결제 프로세스 상태 전이</li>
+ *   <li>{@code createCart} — 초기 상태 키를 {@code EMPTY}로 생성</li>
+ *   <li>{@code addFirstTime}/{@code addOne}/{@code removeOne}/{@code removeItem}
+ *       — 아이템/수량 변경 및 관련 키 TTL 연장</li>
+ *   <li>{@code getAll} — Redis의 상품 식별자와 수량을 조회하고,
+ *       {@link org.example.cloudpos.cart.api.ProductSummaryHandlerApi}를 통해 상품 요약정보를 조회하여
+ *       {@link org.example.cloudpos.cart.dto.CartItemDto} 리스트로 변환</li>
+ *   <li>{@code beginCheckout}/{@code paymentSuccess}/{@code cancelCheckout}
+ *       — 결제 프로세스 상태 전이</li>
  *   <li>{@code clear} — 아이템/수량/상태 관련 모든 키 삭제(결제 성공/만료 등)</li>
  * </ul>
  *
  * <p><b>예외 및 가드</b></p>
  * <ul>
  *   <li>세션 만료(상태 키 없음): {@link org.example.cloudpos.cart.exception.CartExpiredException}</li>
- *   <li>허용되지 않는 상태에서의 변경/전이: {@link IllegalStateException}</li>
+ *   <li>허용되지 않는 상태에서의 변경/전이:
+ *       내부 헬퍼 {@code requireMutableCart}, {@code requireCheckoutPending}에서
+ *       {@link IllegalStateException}을 던진다.</li>
  *   <li>{@code beginCheckout}는 빈 장바구니 금지: {@link IllegalStateException}</li>
  * </ul>
  *
  * <p><b>TTL/만료</b><br>
- * 모든 쓰기 연산은 관련 키의 TTL을 동기화하여 사용자 활동 시 만료가 연장된다.
- * 단, Redis 연산은 다중키 트랜잭션이 아니므로(파이프라인/트랜잭션 미사용) 원자성이 필요하면 트랜잭션 도입을 고려한다.
+ * 쓰기 연산 시 {@link #transition(String, CartEvent)}와 수량 키에 대한 개별 {@code expire} 호출을 통해
+ * 상태 키(<code>state</code>)와 아이템 목록 키(<code>items</code>, <code>itemset</code>), 수량 키(<code>qty:{productId}</code>)의
+ * TTL을 갱신한다. 사용자 활동이 있을 때마다 장바구니의 만료 시점이 연장된다.
+ * Redis 연산은 다중 키 트랜잭션이 아니므로(파이프라인/트랜잭션 미사용) 강한 원자성이 필요하다면
+ * 별도의 트랜잭션/Lua 스크립트를 도입해야 한다.
  * </p>
  *
  * <p><b>스레드/일관성</b><br>
@@ -65,6 +74,7 @@ import java.util.*;
  * 경쟁 조건을 최소화하려면 Lua 스크립트/Redis 트랜잭션/분산락 등을 검토한다.
  * </p>
  */
+
 
 @Service
 @RequiredArgsConstructor
@@ -110,6 +120,23 @@ public class CartService {
         return Optional.ofNullable(byEvent.get(event));
     }
 
+    private void requireMutableCart(String cartId){
+        ensureAlive(cartId);
+        CartState state = getState(cartId);
+        if(state == CartState.CHECKOUT_PENDING || state == CartState.CLOSED){
+            throw new IllegalStateException("현재 상태에서는 장바구니를 수정할 수 없습니다: " + state);
+        }
+    }
+
+    private void requireCheckoutPending(String cartId, String action){
+        ensureAlive(cartId);
+        CartState state = getState(cartId);
+        if(state != CartState.CHECKOUT_PENDING){
+            throw new IllegalStateException(action+"은(는) CHECKOUT_PENDING에서만 가능합니다.");
+        }
+    }
+
+
     public boolean createCart(String cartId) {
         redisTemplate.opsForValue().setIfAbsent(stateKey(cartId), CartState.EMPTY.name(), TTL);
         return true;
@@ -122,12 +149,7 @@ public class CartService {
 
 
     public boolean addFirstTime(String cartId, String productId) {
-        ensureAlive(cartId);
-        CartState s = getState(cartId);
-
-        if (s == CartState.CHECKOUT_PENDING || s == CartState.CLOSED) {
-            throw new IllegalStateException("현재 상태에서는 장바구니를 수정할 수 없습니다: " + s);
-        }
+        requireMutableCart(cartId);
 
         Long added = redisTemplate.opsForSet().add(itemSetKey(cartId), productId);
         if(added != null && added == 1L){
@@ -145,13 +167,7 @@ public class CartService {
 
 
     public boolean addOne(String cartId, String productId) {
-
-        ensureAlive(cartId);
-
-        CartState s = getState(cartId);
-        if (s == CartState.CHECKOUT_PENDING || s == CartState.CLOSED) {
-            throw new IllegalStateException("현재 상태에서는 장바구니를 수정할 수 없습니다: " + s);
-        }
+        requireMutableCart(cartId);
 
         redisTemplate.opsForValue().increment(qtyKey(cartId, productId));
 
@@ -163,13 +179,7 @@ public class CartService {
 
     public boolean removeOne(String cartId, String productId) {
 
-        ensureAlive(cartId);
-
-        CartState s = getState(cartId);
-
-        if (s == CartState.CHECKOUT_PENDING || s == CartState.CLOSED) {
-            throw new IllegalStateException("현재 상태에서는 장바구니를 수정할 수 없습니다: " + s);
-        }
+        requireMutableCart(cartId);
 
         int cur=getQuantity(cartId, productId);
         if(cur<=1) return false;
@@ -183,13 +193,7 @@ public class CartService {
     }
 
     public boolean removeItem(String cartId, String productId) {
-        ensureAlive(cartId);
-
-        CartState s = getState(cartId);
-
-        if (s == CartState.CHECKOUT_PENDING || s == CartState.CLOSED) {
-            throw new IllegalStateException("현재 상태에서는 장바구니를 수정할 수 없습니다: " + s);
-        }
+        requireMutableCart(cartId);
 
         redisTemplate.delete(qtyKey(cartId, productId));
         redisTemplate.opsForSet().remove(itemSetKey(cartId), productId);
@@ -240,11 +244,7 @@ public class CartService {
 
     public void paymentSuccess(String cartId) {
 
-        ensureAlive(cartId);
-
-        if (getState(cartId) != CartState.CHECKOUT_PENDING) {
-            throw new IllegalStateException("결제 성공은 CHECKOUT_PENDING에서만 가능합니다.");
-        }
+        requireCheckoutPending(cartId, "결제 성공" );
 
         transition(cartId, CartEvent.PAYMENT_SUCCESS);
 
@@ -254,11 +254,8 @@ public class CartService {
 
     public void cancelCheckout(String cartId) {
 
-        ensureAlive(cartId);
+        requireCheckoutPending(cartId, "결제 취소" );
 
-        if(getState(cartId) != CartState.CHECKOUT_PENDING) {
-            throw new IllegalStateException("결제 취소는 CHECKOUT_PENDING에서만 가능합니다.");
-        }
 
         transition(cartId, CartEvent.CANCEL);
     }
