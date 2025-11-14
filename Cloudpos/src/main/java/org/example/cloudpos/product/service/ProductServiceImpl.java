@@ -204,5 +204,26 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
+    /**
+     * 상품의 대표 이미지 URL을 조회합니다.
+     *
+     * <p>해당 상품이 존재하지 않을 경우 {@link ProductNotFoundException}이 발생하며,
+     * 조회된 상품의 {@code imageUrl} 필드를 그대로 반환합니다.</p>
+     *
+     * <p>이미지가 등록되지 않은 상품일 경우 {@code null}을 반환합니다.
+     * 이 메서드는 이미지 교체 또는 삭제 기능에서 기존 이미지 경로 확인 용도로 사용됩니다.</p>
+     *
+     * @param id 조회할 상품의 DB 기본 키
+     * @return 상품의 대표 이미지 URL (또는 null)
+     * @throws ProductNotFoundException 조회 대상 상품이 존재하지 않을 경우
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public String getProductImageUrl(Long id) {
+        Product p = repo.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+
+        return p.getImageUrl();
+    }
 
 }

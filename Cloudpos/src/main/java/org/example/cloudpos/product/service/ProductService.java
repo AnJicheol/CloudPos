@@ -100,4 +100,12 @@ public interface ProductService {
      */
     ProductSummaryDto findSummaryByProductId(String productId);
 
+    /**
+     * 상품의 대표 이미지 URL을 조회합니다.
+     *
+     * @param id 상품 ID
+     * @return 이미지 URL 또는 null
+     */
+    String getProductImageUrl(Long id);
+
 }
