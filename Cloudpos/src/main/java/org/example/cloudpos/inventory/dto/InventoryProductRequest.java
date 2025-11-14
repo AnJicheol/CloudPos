@@ -1,5 +1,6 @@
 package org.example.cloudpos.inventory.dto;
 
+import org.example.cloudpos.inventory.service.InventoryServiceImpl;
 import org.hibernate.validator.constraints.NotBlank;
 
 /**
@@ -20,7 +21,7 @@ import org.hibernate.validator.constraints.NotBlank;
  *
  * @param productId 추가할 상품의 식별자(비즈니스 키, ULID 문자열 등)
  *
- * @see org.example.cloudpos.inventory.service.InventoryService#addProduct(String, String)
+ * @see InventoryServiceImpl#addProduct(String, String)
  * @since 1.0
  */
 public record InventoryProductRequest(
