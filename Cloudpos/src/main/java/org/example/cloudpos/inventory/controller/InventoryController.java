@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.inventory.dto.InventoryCreateRequest;
 import org.example.cloudpos.inventory.dto.InventoryProductRequest;
 import org.example.cloudpos.inventory.dto.InventoryProductResponse;
-import org.example.cloudpos.inventory.service.InventoryServiceImpl;
+import org.example.cloudpos.inventory.service.InventoryService;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
 import org.example.cloudpos.product.dto.ProductUpdateRequest;
@@ -27,7 +27,7 @@ import java.util.List;
 @RequestMapping("/api")
 public class InventoryController {
 
-    private final InventoryServiceImpl inventoryService;
+    private final InventoryService inventoryService;
     private final ProductService productService;
 
     // ==========================================================

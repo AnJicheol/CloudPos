@@ -58,13 +58,12 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     List<Inventory> findAllWithProductByInventoryId(String inventoryId);
 
     /**
-     * 지정된 매장에서 특정 상품을 제거합니다.
+     * 지정한 매장에서 지정한 상품 매핑을 조회합니다.
      *
      * @param inventoryId 매장 외부 식별자 (ULID)
-     * @param productId 상품 기본키 ID
-     * @return 삭제된 행의 개수
+     * @param productId   상품 식별자
+     * @return 매핑된 {@link Inventory} 엔티티, 없으면 {@code null}
      */
-    long deleteByInventoryIdAndProduct_ProductId(String inventoryId, String productId);
+    Inventory findByInventoryIdAndProduct_ProductId(String inventoryId, String productId);
 
-    Optional<Inventory> findByInventoryIdAndProduct_ProductId(String inventoryId, String productId);
 }

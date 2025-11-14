@@ -41,7 +41,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class InventoryServiceImpl {
+public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryRepository inventoryRepo;
     private final ProductRepository productRepo;
@@ -54,6 +54,7 @@ public class InventoryServiceImpl {
      * @param req 매장 생성 요청 DTO
      * @return 생성된 매장의 ULID
      */
+    @Override
     public String create(InventoryCreateRequest req) {
         String ulid = UlidCreator.getUlid().toString();
         Inventory inventory = new Inventory(ulid, req.name(), null);
@@ -74,6 +75,7 @@ public class InventoryServiceImpl {
      * @throws InventoryNotFoundException 지정한 매장이 존재하지 않을 경우
      * @throws DuplicateStoreProductException 동일 상품이 이미 등록된 경우
      */
+    @Override
     @Transactional
     public void addProduct(String inventoryId, String productId) {
         // 상품 존재 확인
@@ -104,6 +106,7 @@ public class InventoryServiceImpl {
      * @return 매장 내 상품 정보를 담은 DTO 목록
      * @throws IllegalArgumentException 지정한 매장이 존재하지 않을 경우
      */
+    @Override
     @Transactional(readOnly = true)
     public List<InventoryProductResponse> listProducts(String inventoryId) {
         // 매장 존재 검증
@@ -117,23 +120,27 @@ public class InventoryServiceImpl {
     }
 
     /**
-     * 매장에서 특정 상품을 제거합니다.
+     * 매장에서 특정 상품 매핑을 제거합니다.
      *
-     * <p>매장-상품 매핑 테이블에서 해당 상품을 삭제하며,
-     * 매장이나 상품 엔티티 자체에는 영향을 주지 않습니다.</p>
+     * <p>해당 매장(<code>inventoryId</code>)에 등록된 상품(<code>productId</code>)을 조회한 뒤,
+     * 매장-상품 매핑만 끊는 방식으로 처리합니다. (소프트 삭제)</p>
+     *
+     * <p>실제 DB 행을 삭제하지 않고 {@code product_id}를 {@code null}로 변경하여,
+     * 히스토리는 유지하면서도 이후 상품 목록 조회 시에는 노출되지 않도록 합니다.</p>
      *
      * @param inventoryId 매장 외부 식별자 (ULID)
-     * @param productId 상품 기본키 ID
-     * @throws IllegalArgumentException 매장이 존재하지 않거나 해당 상품이 매장에 없을 경우
+     * @param productId   제거할 상품의 식별자
+     * @throws IllegalArgumentException 지정한 매장에 해당 상품 매핑이 존재하지 않을 경우
      */
+    @Override
     @Transactional
     public void removeProduct(String inventoryId, String productId) {
-        Inventory inventory = inventoryRepo
-                .findByInventoryIdAndProduct_ProductId(inventoryId, productId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 매장에서 해당 상품을 찾을 수 없습니다."));
+        Inventory inventory = inventoryRepo.findByInventoryIdAndProduct_ProductId(inventoryId, productId);
 
-        // 하드 삭제 대신 매핑만 끊기
+        if (inventory == null) {
+            throw new IllegalArgumentException("해당 매장에서 해당 상품을 찾을 수 없습니다.");
+        }
+
         inventory.clearProduct();
-        // @Transactional 덕분에 트랜잭션 끝날 때 update 쿼리로 product_id = null 반영됨
     }
 }
