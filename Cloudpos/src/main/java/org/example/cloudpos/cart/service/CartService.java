@@ -150,33 +150,21 @@ public class CartService {
     }
 
 
-
-    public boolean addOne(String cartId, String productId) {
-        requireMutableCart(cartId);
-
-        redisTemplate.opsForValue().increment(qtyKey(cartId, productId));
-
-        transition(cartId, CartEvent.ADD_ITEM);
-
-        refreshTtl(cartId, productId);
-
-        return true;
-    }
-
-    public boolean removeOne(String cartId, String productId) {
-
+    public boolean changeQuantity(String cartId, String productId, int delta) {
         requireMutableCart(cartId);
 
         int cur=getQuantity(cartId, productId);
-        if(cur<=1) return false;
+        if((cur+delta)<1)  return false;
 
-        redisTemplate.opsForValue().decrement(qtyKey(cartId, productId));
+        redisTemplate.opsForValue().increment(qtyKey(cartId, productId), delta);
 
-        transition(cartId, CartEvent.REMOVE_ITEM);
+        CartEvent event = (delta > 0) ? CartEvent.ADD_ITEM : CartEvent.REMOVE_ITEM;
+        transition(cartId, event);
 
         refreshTtl(cartId, productId);
 
         return true;
+
     }
 
     public boolean removeItem(String cartId, String productId) {

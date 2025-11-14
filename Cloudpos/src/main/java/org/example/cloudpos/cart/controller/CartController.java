@@ -38,7 +38,7 @@ import java.util.List;
  * </ul>
  *
  * <p><b>비고</b><br>
- * 장바구니 로직은 {@link org.example.cloudpos.cart.service.CartService}에서 처리하며,
+ * 장바구니 로직은 {@link CartService}에서 처리하며,
  * 식별자는 {@link org.example.cloudpos.cart.domain.UlidGenerator}로 생성됩니다.
  * </p>
 
@@ -48,90 +48,117 @@ import java.util.List;
 @RequestMapping("/api/carts")
 public class CartController {
 
-    private final CartService cartService;
+    private final CartService cartServiceImpl;
 
     public record CreateCartResponse(String cartId, String state) {}
     public record AddFirstRequest(String productId) {}
     public record GenericStateResponse(String state) {}
     public record QuantityUpdateResponse(int quantity, String state) {}
 
-    @Operation(summary = "장바구니 생성", description = "새로운 cartId를 생성하고 Redis에 초기 상태(EMPTY)로 저장합니다.")
-    @ApiResponse(responseCode = "200", description = "생성 성공",
-            content = @Content(schema = @Schema(implementation = CreateCartResponse.class)))
+    @Operation(
+            summary = "장바구니 생성",
+            description = "새로운 cartId를 생성하고 Redis에 초기 상태(EMPTY)로 저장합니다."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "생성 성공",
+            content = @Content(schema = @Schema(implementation = CreateCartResponse.class))
+    )
     @PostMapping
     public ResponseEntity<CreateCartResponse> createCart() {
         String cartId = UlidGenerator.generate();
-        cartService.createCart(cartId);
-        CartState state = cartService.getState(cartId);
+        cartServiceImpl.createCart(cartId);
+        CartState state = cartServiceImpl.getState(cartId);
         return ResponseEntity.ok(new CreateCartResponse(cartId, state.name()));
     }
 
-    @Operation(summary = "첫 상품 추가", description = "장바구니에 첫 상품을 담습니다. 존재하지 않으면 수량 1로 추가합니다.")
-    @ApiResponse(responseCode = "200", description = "추가 성공",
-            content = @Content(schema = @Schema(implementation = QuantityUpdateResponse.class)))
+    @Operation(
+            summary = "첫 상품 추가",
+            description = "장바구니에 첫 상품을 담습니다. 존재하지 않으면 수량 1로 추가합니다."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "추가 성공",
+            content = @Content(schema = @Schema(implementation = QuantityUpdateResponse.class))
+    )
     @ApiResponse(responseCode = "409", description = "상태 규칙 위반")
     @ApiResponse(responseCode = "410", description = "만료된 장바구니")
     @PostMapping("/{cartId}/items:first")
     public ResponseEntity<QuantityUpdateResponse> addFirst(@PathVariable String cartId, @RequestBody AddFirstRequest request) {
-        cartService.addFirstTime(cartId, request.productId);
-        int qty = cartService.getQuantity(cartId, request.productId);
-        return ResponseEntity.ok(new QuantityUpdateResponse(qty, cartService.getState(cartId).name()));
+        cartServiceImpl.addFirstTime(cartId, request.productId);
+        int qty = cartServiceImpl.getQuantity(cartId, request.productId);
+        return ResponseEntity.ok(new QuantityUpdateResponse(qty, cartServiceImpl.getState(cartId).name()));
     }
 
-    @Operation(summary = "상품 수량 증가", description = "해당 상품의 수량을 1 증가시킵니다.")
-    @ApiResponse(responseCode = "200", description = "증가 성공",
-            content = @Content(schema = @Schema(implementation = QuantityUpdateResponse.class)))
-    @ApiResponse(responseCode = "409", description = "상태 규칙 위반")
-    @ApiResponse(responseCode = "410", description = "만료된 장바구니")
-    @PostMapping("/{cartId}/items/{productId}/inc")
-    public ResponseEntity<QuantityUpdateResponse> increment(@PathVariable String cartId, @PathVariable String productId) {
-        cartService.addOne(cartId, productId);
-        int qty = cartService.getQuantity(cartId, productId);
-        return ResponseEntity.ok(new QuantityUpdateResponse(qty, cartService.getState(cartId).name()));
-    }
-
-    @Operation(summary = "상품 수량 감소", description = "해당 상품의 수량을 1 감소시킵니다. 최소 수량에서 감소 시도 시 오류가 발생합니다.")
-    @ApiResponse(responseCode = "200", description = "감소 성공",
-            content = @Content(schema = @Schema(implementation = QuantityUpdateResponse.class)))
-    @ApiResponse(responseCode = "400", description = "최소 수량에서 감소 시도")
-    @ApiResponse(responseCode = "409", description = "상태 규칙 위반")
-    @ApiResponse(responseCode = "410", description = "만료된 장바구니")
-    @PostMapping("/{cartId}/items/{productId}/dec")
-    public ResponseEntity<QuantityUpdateResponse> decrement(@PathVariable String cartId, @PathVariable String productId) {
-        boolean ok = cartService.removeOne(cartId, productId);
+    @Operation(
+            summary = "상품 수량 변경",
+            description = "장바구니에서 지정한 상품의 수량을 delta 만큼 증감합니다. " +
+                    "프론트에서 버튼 연타를 모아서 delta 값으로 한 번에 요청할 때 사용합니다."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "수량 변경 성공",
+            content = @Content(schema = @Schema(implementation = QuantityUpdateResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "409",
+            description = "상태 규칙 위반 (수정 불가능한 상태이거나 최소 수량 1개 규칙 위반)"
+    )
+    @ApiResponse(
+            responseCode = "410",
+            description = "만료된 장바구니"
+    )
+    @PostMapping("/{cartId}/items/{productId}")
+    public ResponseEntity<QuantityUpdateResponse> changeQuantity(@PathVariable String cartId, @PathVariable String productId, @RequestParam int delta) {
+        boolean ok = cartServiceImpl.changeQuantity(cartId, productId,delta);
         if (!ok) {
-            throw new IllegalStateException("상품이 이미 최소수량입니다.");
+            throw new IllegalStateException("상품의 최소소량은 1개 입니다.");
         }
-        int qty = cartService.getQuantity(cartId, productId);
-        return ResponseEntity.ok(new QuantityUpdateResponse(qty, cartService.getState(cartId).name()));
+        int qty = cartServiceImpl.getQuantity(cartId, productId);
+        return ResponseEntity.ok(new QuantityUpdateResponse(qty, cartServiceImpl.getState(cartId).name()));
     }
 
-    @Operation(summary = "상품 제거", description = "장바구니에서 지정한 상품을 제거합니다.")
-    @ApiResponse(responseCode = "200", description = "제거 성공",
-            content = @Content(schema = @Schema(implementation = GenericStateResponse.class)))
+    @Operation(
+            summary = "상품 제거",
+            description = "장바구니에서 지정한 상품을 완전히 제거합니다."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "제거 성공",
+            content = @Content(schema = @Schema(implementation = GenericStateResponse.class))
+    )
     @ApiResponse(responseCode = "409", description = "상태 규칙 위반")
     @ApiResponse(responseCode = "410", description = "만료된 장바구니")
     @DeleteMapping("/{cartId}/items/{productId}")
     public ResponseEntity<GenericStateResponse> removeItem(@PathVariable String cartId, @PathVariable String productId) {
-        cartService.removeItem(cartId, productId);
-        return ResponseEntity.ok(new GenericStateResponse(cartService.getState(cartId).name()));
+        cartServiceImpl.removeItem(cartId, productId);
+        return ResponseEntity.ok(new GenericStateResponse(cartServiceImpl.getState(cartId).name()));
     }
 
-    @Operation(summary = "장바구니 조회", description = "담긴 상품과 수량을 반환합니다.")
-    @ApiResponse(responseCode = "200", description = "조회 성공",
-            content = @Content(schema = @Schema(implementation = CartItemDto.class)))
+    @Operation(
+            summary = "장바구니 조회",
+            description = "담긴 상품과 수량을 반환합니다."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(schema = @Schema(implementation = CartItemDto.class))
+    )
     @ApiResponse(responseCode = "410", description = "만료된 장바구니")
     @GetMapping("/{cartId}")
     public ResponseEntity<List<CartItemDto>> getCart(@PathVariable String cartId) {
-        return ResponseEntity.ok(cartService.getAll(cartId));
+        return ResponseEntity.ok(cartServiceImpl.getAll(cartId));
     }
 
-    @Operation(summary = "장바구니 비우기", description = "모든 상품 및 상태 키를 삭제합니다.")
+    @Operation(
+            summary = "장바구니 비우기",
+            description = "모든 상품 및 상태 키를 삭제합니다."
+    )
     @ApiResponse(responseCode = "204", description = "비우기 성공")
     @ApiResponse(responseCode = "410", description = "만료된 장바구니")
     @DeleteMapping("/{cartId}")
     public ResponseEntity<Void> clear(@PathVariable String cartId) {
-        cartService.clear(cartId);
+        cartServiceImpl.clear(cartId);
         return ResponseEntity.noContent().build();
     }
 }
