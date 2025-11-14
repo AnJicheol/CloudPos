@@ -6,12 +6,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.order.domain.Order;
+import org.example.cloudpos.order.domain.PaymentMethod;
+import org.example.cloudpos.order.dto.OrderResponse;
 import org.example.cloudpos.order.service.OrderService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -22,20 +21,21 @@ public class OrderController {
 
     @Operation(
             summary = "결제 시작",
-            description = "장바구니 ID를 받아 장바구니 상태를 '결제 진행'으로 변경하고, " +
-                    "현재 장바구니 명세와 할인 정보를 기준으로 최종 결제 금액을 확정합니다. " +
-                    "한 번 확정된 금액은 이후에 변경되지 않습니다."
+            description = """
+                장바구니 ID와 결제 수단을 받아 장바구니 상태를 '결제 진행'으로 변경하고,
+                현재 장바구니 명세와 할인 정보를 기준으로 최종 결제 금액을 확정합니다.
+                한 번 확정된 금액은 이후에 변경되지 않습니다.
+                """
     )
     @ApiResponse(
             responseCode = "200",
             description = "주문 생성/결제 시작 성공",
             content = @Content(
-                    schema = @Schema(implementation = Order.class)
+                    schema = @Schema(implementation = OrderResponse.class)
             )
     )
     @PostMapping("/start-payment/{cartId}")
-    public ResponseEntity<Order> startPayment(@PathVariable String cartId) {
-        Order order = orderService.startPayment(cartId);
-        return ResponseEntity.ok(order);
+    public ResponseEntity<OrderResponse> startPayment(@PathVariable String cartId, @RequestBody PaymentMethod paymentMethod) {
+        return ResponseEntity.ok(orderService.startPayment(cartId, paymentMethod));
     }
 }
