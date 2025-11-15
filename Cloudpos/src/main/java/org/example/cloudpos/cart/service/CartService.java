@@ -35,10 +35,9 @@ import java.util.*;
  * <pre>
  * EMPTY → IN_PROGRESS → CHECKOUT_PENDING → CLOSED
  * </pre>
- *
- * <h3>TTL 관리</h3>
- * <p>각 Redis 키(cart:{id}:state/items/itemset/qty:productId)는
- * 쓰기 연산 시마다 TTL이 갱신되어, 사용자 활동이 있을 때마다 만료 시점이 연장됩니다.</p>
+ * * <h3>TTL 관리</h3>
+ *  * <p>각 Redis 키(cart:{id}:state/order/items)는
+ *  * 쓰기 연산 시마다 TTL이 갱신되어, 사용자 활동이 있을 때마다 만료 시점이 연장됩니다.</p>
  *
  * <h3>예외 처리</h3>
  * <ul>
@@ -54,9 +53,8 @@ public class CartService {
     private final ProductSummaryHandlerApi productSummaryHandlerApi;
     private static final Duration TTL=Duration.ofMinutes(5);
 
-    private String itemsKey(String cartId) { return "cart:" + cartId + ":items"; }
+    private String itemsHashKey(String cartId) { return "cart:" + cartId + ":items"; }
     private String itemSetKey(String cartId) { return "cart:" + cartId + ":itemset"; }
-    private String qtyKey(String cartId, String productId) { return "cart:" + cartId + ":qty:" + productId; }
     private String stateKey(String cartId) { return "cart:" + cartId + ":state"; }
 
     private static final EnumMap<CartState, EnumMap<CartEvent, CartState>> TRANSITIONS = new EnumMap<>(CartState.class);
@@ -91,18 +89,12 @@ public class CartService {
         return Optional.ofNullable(byEvent.get(event));
     }
 
-    private void refreshTtl(String cartId, String productIdOrNull) {
+    private void refreshTtl(String cartId) {
         redisTemplate.expire(stateKey(cartId), TTL);
-        redisTemplate.expire(itemsKey(cartId), TTL);
+        redisTemplate.expire(itemsHashKey(cartId), TTL);
         redisTemplate.expire(itemSetKey(cartId), TTL);
-        if(productIdOrNull != null){
-            redisTemplate.expire(qtyKey(cartId, productIdOrNull), TTL);
-        }
     }
 
-    private void refreshTtl(String cartId) {
-        refreshTtl(cartId, null);
-    }
 
     private void requireMutableCart(String cartId){
         ensureAlive(cartId);
@@ -144,16 +136,18 @@ public class CartService {
     public void addFirstTime(String cartId, String productId) {
         requireMutableCart(cartId);
 
-        Long added = redisTemplate.opsForSet().add(itemSetKey(cartId), productId);
-        if(added != null && added == 1L){
-            redisTemplate.opsForList().rightPush(itemsKey(cartId), productId);
-            redisTemplate.opsForValue().setIfAbsent(qtyKey(cartId, productId),"1",TTL);
+        boolean exists = Boolean.TRUE.equals(
+                redisTemplate.opsForHash().hasKey(itemsHashKey(cartId), productId)
+        );
+        if(!exists){
+            redisTemplate.opsForList().rightPush(itemSetKey(cartId), productId);
+            redisTemplate.opsForHash().put(itemsHashKey(cartId), productId, "1");
         }else{
-            redisTemplate.opsForValue().increment(qtyKey(cartId, productId), 1);
+            redisTemplate.opsForHash().increment(itemsHashKey(cartId), productId, 1);
         }
 
         transition(cartId, CartEvent.ADD_ITEM);
-        refreshTtl(cartId, productId);
+        refreshTtl(cartId);
 
     }
 
@@ -167,12 +161,12 @@ public class CartService {
         int cur=getQuantity(cartId, productId);
         if((cur+delta)<1)  return false;
 
-        redisTemplate.opsForValue().increment(qtyKey(cartId, productId), delta);
+        redisTemplate.opsForHash().increment(itemsHashKey(cartId), productId, delta);
 
         CartEvent event = (delta > 0) ? CartEvent.ADD_ITEM : CartEvent.REMOVE_ITEM;
         transition(cartId, event);
 
-        refreshTtl(cartId, productId);
+        refreshTtl(cartId);
 
         return true;
 
@@ -186,9 +180,8 @@ public class CartService {
     public void removeItem(String cartId, String productId) {
         requireMutableCart(cartId);
 
-        redisTemplate.delete(qtyKey(cartId, productId));
-        redisTemplate.opsForSet().remove(itemSetKey(cartId), productId);
-        redisTemplate.opsForList().remove(itemsKey(cartId),0,productId);
+        redisTemplate.opsForHash().delete(itemsHashKey(cartId), productId);
+        redisTemplate.opsForList().remove(itemSetKey(cartId),0,productId);
 
         transition(cartId, CartEvent.REMOVE_ITEM);
 
@@ -204,16 +197,16 @@ public class CartService {
         ensureAlive(cartId);
 
         //productid
-        List<String> ids = redisTemplate.opsForList().range(itemsKey(cartId), 0, -1);
+        List<String> ids = redisTemplate.opsForList().range(itemSetKey(cartId), 0, -1);
         if (ids == null || ids.isEmpty()) return List.of();
 
-        List<String> qtyKeys = ids.stream().map(pid -> qtyKey(cartId, pid)).toList();
-        List<String> quantities = redisTemplate.opsForValue().multiGet(qtyKeys);
+        List<Object> quantities = redisTemplate.opsForHash().multiGet(itemsHashKey(cartId), new ArrayList<>(ids));
 
         List<CartItemDto> result = new ArrayList<>(ids.size());
         for (int i = 0; i < ids.size(); i++) {
             String pid = ids.get(i);
-            String qStr = (quantities == null) ? null : quantities.get(i);
+            Object qObj= (quantities == null) ? null : quantities.get(i);
+            String qStr=(qObj == null) ? null : qObj.toString();
             int qty = (qStr == null) ? 0 : Integer.parseInt(qStr);
             if (qty < 1) continue;
 
@@ -234,7 +227,7 @@ public class CartService {
 
         ensureAlive(cartId);
 
-        List<String> ids=redisTemplate.opsForList().range(itemsKey(cartId), 0, -1);
+        List<String> ids=redisTemplate.opsForList().range(itemSetKey(cartId), 0, -1);
 
         if(ids == null || ids.isEmpty()) {
             throw new IllegalStateException("빈 장바구니는 결제를 시작 할 수 없음");
@@ -276,20 +269,11 @@ public class CartService {
 
     /**
      * 장바구니에 속한 모든 Redis 키를 삭제한다.
-     * (state, items, itemset, qty)
+     * (state, itemHash, itemset)
      */
     public void clear(String cartId) {
-        Set<String> pids = redisTemplate.opsForSet().members(itemSetKey(cartId));
-
-        if (pids != null && !pids.isEmpty()) {
-            List<String> qtyKeys = pids.stream()
-                    .map(pid -> qtyKey(cartId, pid))
-                    .toList();
-
-            redisTemplate.delete(qtyKeys);
-        }
         redisTemplate.delete(itemSetKey(cartId));
-        redisTemplate.delete(itemsKey(cartId));
+        redisTemplate.delete(itemsHashKey(cartId));
         redisTemplate.delete(stateKey(cartId));
     }
 
@@ -311,8 +295,13 @@ public class CartService {
     }
 
     public int getQuantity(String cartId, String productId) {
-        String v=redisTemplate.opsForValue().get(qtyKey(cartId, productId));
-        return (v == null) ? 0 : Integer.parseInt(v);
+        Object v=redisTemplate.opsForHash().get(itemsHashKey(cartId), productId);
+        if (v == null) return 0;
+
+        String s = v.toString();
+        if (s.isEmpty()) return 0;
+
+        return Integer.parseInt(s);
     }
 
 }
