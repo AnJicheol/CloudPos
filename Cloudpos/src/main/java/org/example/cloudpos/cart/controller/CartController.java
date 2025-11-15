@@ -106,11 +106,7 @@ public class CartController {
     )
     @PostMapping("/{cartId}/items/{productId}")
     public ResponseEntity<QuantityUpdateResponse> changeQuantity(@PathVariable String cartId, @PathVariable String productId, @RequestParam int delta) {
-        boolean ok = cartService.changeQuantity(cartId, productId,delta);
-        if (!ok) {
-            throw new IllegalStateException("상품의 최소소량은 1개 입니다.");
-        }
-        int qty = cartService.getQuantity(cartId, productId);
+        int qty = cartService.changeQuantity(cartId, productId,delta);
         return ResponseEntity.ok(new QuantityUpdateResponse(qty));
     }
 
