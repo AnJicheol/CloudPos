@@ -1,4 +1,7 @@
 package org.example.cloudpos.cart.fsm;
+
+import org.example.cloudpos.cart.service.CartServiceImpl;
+
 /**
 
  장바구니 상태 전이를 유발하는 이벤트를 정의한 열거형입니다.
@@ -15,7 +18,7 @@ package org.example.cloudpos.cart.fsm;
 
  각 이벤트는 {@link org.example.cloudpos.cart.domain.CartState}의 상태 전이 표에 따라 동작하며,
 
- {@link org.example.cloudpos.cart.service.CartService}에서 FSM 전이 로직으로 처리됩니다.
+ {@link CartServiceImpl}에서 FSM 전이 로직으로 처리됩니다.
  </p>
 
  */

@@ -1,4 +1,7 @@
 package org.example.cloudpos.cart.domain;
+
+import org.example.cloudpos.cart.service.CartServiceImpl;
+
 /**
 
  * 장바구니의 상태를 정의하는 유한 상태(enum)입니다.
@@ -13,7 +16,7 @@ package org.example.cloudpos.cart.domain;
  *
  * <p><b>비고</b><br>
  * 상태 전이는 {@link org.example.cloudpos.cart.fsm.CartEvent}에 의해 결정되며,
- * {@link org.example.cloudpos.cart.service.CartService} 내의 FSM(유한 상태 머신) 로직에서 처리됩니다.
+ * {@link CartServiceImpl} 내의 FSM(유한 상태 머신) 로직에서 처리됩니다.
  * </p>
 
  */

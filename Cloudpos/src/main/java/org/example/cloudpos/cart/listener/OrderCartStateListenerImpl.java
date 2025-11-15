@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.cart.domain.CartState;
 import org.example.cloudpos.cart.dto.CartItemDto;
 import org.example.cloudpos.cart.exception.InvalidCartStateException;
-import org.example.cloudpos.cart.service.CartCheckoutServiceImpl;
-import org.example.cloudpos.cart.service.CartService;
+import org.example.cloudpos.cart.service.CartCheckoutService;
+import org.example.cloudpos.cart.service.CartServiceImpl;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.List;
  * <h2>OrderCartStateListenerImpl</h2>
  *
  * {@link OrderCartStateListener}의 구현체로,
- * 장바구니(Cart)의 상태 변화를 감지하여 {@link CartCheckoutServiceImpl}를 통해
+ * 장바구니(Cart)의 상태 변화를 감지하여 {@link CartCheckoutService}를 통해
  * 적절한 상태 전이 및 아이템 조회를 수행합니다.
  *
  * <p>결제 시작, 결제 성공, 결제 취소 등의 이벤트를 처리하며
@@ -24,26 +24,26 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderCartStateListenerImpl implements OrderCartStateListener {
 
-    private final CartCheckoutServiceImpl cartCheckoutServiceImpl;
-    private final CartService cartService;
+    private final CartCheckoutService cartCheckoutService;
+    private final CartServiceImpl cartService;
 
     @Override
     public void onClose(String cartId) {
-        cartCheckoutServiceImpl.paymentSuccess(cartId);
+        cartCheckoutService.paymentSuccess(cartId);
     }
 
     @Override
     public void onOpen(String cartId) {
-        cartCheckoutServiceImpl.cancelCheckout(cartId);
+        cartCheckoutService.cancelCheckout(cartId);
     }
 
     @Override
     public List<CartItemDto> onPayment(String cartId) {
-        if (cartCheckoutServiceImpl.getState(cartId) != CartState.CHECKOUT_PENDING) {
+        if (cartCheckoutService.getState(cartId) != CartState.CHECKOUT_PENDING) {
             throw new InvalidCartStateException("장바구니가 결제 가능한 상태가 아닙니다.");
 
         }
-        cartCheckoutServiceImpl.beginCheckout(cartId);
+        cartCheckoutService.beginCheckout(cartId);
         return cartService.getAll(cartId);
     }
 

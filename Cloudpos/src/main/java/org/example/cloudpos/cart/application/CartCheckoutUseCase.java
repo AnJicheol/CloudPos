@@ -1,6 +1,7 @@
 package org.example.cloudpos.cart.application;
 
 import org.example.cloudpos.cart.dto.CartItemDto;
+import org.example.cloudpos.cart.service.CartServiceImpl;
 
 import java.util.List;
 /**
@@ -15,7 +16,7 @@ import java.util.List;
  * </ul>
  *
  * <p><b>비고</b><br>
- * 실제 비즈니스 로직은 {@link org.example.cloudpos.cart.service.CartService}를 이용하는
+ * 실제 비즈니스 로직은 {@link CartServiceImpl}를 이용하는
  * 구현체({@code CartCheckoutService})에서 처리됩니다.
  * </p>
 
