@@ -9,6 +9,7 @@ import org.example.cloudpos.cart.dto.CreateCartResponse;
 import org.example.cloudpos.cart.dto.ProductSummary;
 import org.example.cloudpos.cart.exception.CartExpiredException;
 import org.example.cloudpos.cart.fsm.CartEvent;
+import org.example.cloudpos.cart.fsm.CartStateMachine;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -59,37 +60,7 @@ public class CartService {
     private String itemSetKey(String cartId) { return "cart:" + cartId + ":itemset"; }
     private String stateKey(String cartId) { return "cart:" + cartId + ":state"; }
 
-    private static final EnumMap<CartState, EnumMap<CartEvent, CartState>> TRANSITIONS = new EnumMap<>(CartState.class);
-    static {
-        // EMPTY
 
-        EnumMap<CartEvent, CartState> empty = new EnumMap<>(CartEvent.class);
-        empty.put(CartEvent.ADD_ITEM, CartState.IN_PROGRESS);
-        TRANSITIONS.put(CartState.EMPTY, empty);
-
-        // IN_PROGRESS
-        EnumMap<CartEvent, CartState> inProgress = new EnumMap<>(CartEvent.class);
-        inProgress.put(CartEvent.ADD_ITEM, CartState.IN_PROGRESS);
-        inProgress.put(CartEvent.REMOVE_ITEM, CartState.IN_PROGRESS);
-        inProgress.put(CartEvent.CHECKOUT, CartState.CHECKOUT_PENDING);
-        TRANSITIONS.put(CartState.IN_PROGRESS, inProgress);
-
-        // CHECKOUT_PENDING
-        EnumMap<CartEvent, CartState> checkout = new EnumMap<>(CartEvent.class);
-        checkout.put(CartEvent.PAYMENT_SUCCESS, CartState.CLOSED);
-        checkout.put(CartEvent.CANCEL, CartState.IN_PROGRESS);
-        TRANSITIONS.put(CartState.CHECKOUT_PENDING, checkout);
-
-        // CLOSED(종단)
-        TRANSITIONS.put(CartState.CLOSED, new EnumMap<>(CartEvent.class));
-    }
-
-
-    private Optional<CartState> nextStateOpt(CartState cur, CartEvent event) {
-        EnumMap<CartEvent, CartState> byEvent = TRANSITIONS.get(cur);
-        if (byEvent == null) return Optional.empty();
-        return Optional.ofNullable(byEvent.get(event));
-    }
 
     private void refreshTtl(String cartId) {
         redisTemplate.expire(stateKey(cartId), TTL);
@@ -103,14 +74,6 @@ public class CartService {
         CartState state = getState(cartId);
         if(state == CartState.CHECKOUT_PENDING || state == CartState.CLOSED){
             throw new IllegalStateException("현재 상태에서는 장바구니를 수정할 수 없습니다: " + state);
-        }
-    }
-
-    private void requireCheckoutPending(String cartId, String action){
-        ensureAlive(cartId);
-        CartState state = getState(cartId);
-        if(state != CartState.CHECKOUT_PENDING){
-            throw new IllegalStateException(action+"은(는) CHECKOUT_PENDING에서만 가능합니다.");
         }
     }
 
@@ -199,6 +162,17 @@ public class CartService {
 
     }
 
+
+    /**
+     * 장바구니에 속한 모든 Redis 키를 삭제한다.
+     * (state, itemHash, itemset)
+     */
+    public void clear(String cartId) {
+        redisTemplate.delete(itemSetKey(cartId));
+        redisTemplate.delete(itemsHashKey(cartId));
+        redisTemplate.delete(stateKey(cartId));
+    }
+
     /**
      * 장바구니의 모든 상품과 수량을 조회하여 DTO로 반환한다.
      * ProductSummaryHandlerApi를 통해 상품 정보를 조회한다.
@@ -229,65 +203,6 @@ public class CartService {
         return result;
     }
 
-    /**
-     * 결제를 시작한다.
-     * 빈 장바구니일 경우 예외를 발생시킨다.
-     */
-    public void beginCheckout(String cartId) {
-
-        ensureAlive(cartId);
-
-        List<String> ids=redisTemplate.opsForList().range(itemSetKey(cartId), 0, -1);
-
-        if(ids == null || ids.isEmpty()) {
-            throw new IllegalStateException("빈 장바구니는 결제를 시작 할 수 없음");
-        }
-
-        transition(cartId, CartEvent.CHECKOUT);
-        refreshTtl(cartId);
-
-
-    }
-
-    /**
-     * 결제 성공 처리.
-     * CHECKOUT_PENDING 상태에서만 호출 가능하며 장바구니 데이터를 삭제한다.
-     */
-    public void paymentSuccess(String cartId) {
-
-        requireCheckoutPending(cartId, "결제 성공" );
-
-        transition(cartId, CartEvent.PAYMENT_SUCCESS);
-
-        clear(cartId);
-
-    }
-
-    /**
-     * 결제 취소 처리.
-     * CHECKOUT_PENDING 상태를 IN_PROGRESS로 되돌린다.
-     */
-    public void cancelCheckout(String cartId) {
-
-        requireCheckoutPending(cartId, "결제 취소" );
-
-
-        transition(cartId, CartEvent.CANCEL);
-        refreshTtl(cartId);
-
-    }
-
-    /**
-     * 장바구니에 속한 모든 Redis 키를 삭제한다.
-     * (state, itemHash, itemset)
-     */
-    public void clear(String cartId) {
-        redisTemplate.delete(itemSetKey(cartId));
-        redisTemplate.delete(itemsHashKey(cartId));
-        redisTemplate.delete(stateKey(cartId));
-    }
-
-
     private void ensureAlive(String cartId) {
         if (!Boolean.TRUE.equals(redisTemplate.hasKey(stateKey(cartId)))) {
             clear(cartId);
@@ -299,7 +214,7 @@ public class CartService {
     //상태전이, ttl 동기화?
     private void transition(String cartId, CartEvent event) {
         CartState cur = getState(cartId);
-        CartState next = nextStateOpt(cur, event).orElse(cur);
+        CartState next = CartStateMachine.next(cur, event).orElse(cur);
         redisTemplate.opsForValue().set(stateKey(cartId), next.name());
 
     }
