@@ -1,12 +1,12 @@
 package org.example.cloudpos.payment.domain;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.example.cloudpos.order.domain.Order;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
+
 
 /**
  * 결제(Payment) 엔티티
@@ -31,10 +31,15 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long orderId; // 주문과 관련된 엔티티로 추후에 연관관계 매핑예정
+    @Column(name = "payment_id", nullable = false, unique = true)
+    private String paymentId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", referencedColumnName = "order_id", nullable = false)
+    private Order order;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_method_id")
     private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
@@ -42,7 +47,7 @@ public class Payment {
     private PaymentStatus paymentStatus;
 
     @Column(name = "amount_final")
-    private BigDecimal amountFinal;
+    private int amountFinal;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -50,8 +55,20 @@ public class Payment {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Builder
+    public Payment(String paymentId, Order order, PaymentMethod paymentMethod, PaymentStatus paymentStatus, int amountFinal) {
+        this.paymentId = paymentId;
+        this.order = order;
+        this.paymentMethod = paymentMethod;
+        this.paymentStatus = paymentStatus;
+        this.amountFinal = amountFinal;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
     @PrePersist
     public void prePersist() {
+
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -59,6 +76,11 @@ public class Payment {
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    //결제 비즈니스 메서드
+    public void updateStatus(PaymentStatus newStatus) {
+        this.paymentStatus = newStatus;
     }
 
 }

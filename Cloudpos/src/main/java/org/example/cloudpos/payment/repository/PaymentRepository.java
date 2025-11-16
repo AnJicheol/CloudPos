@@ -3,6 +3,9 @@ package org.example.cloudpos.payment.repository;
 import org.example.cloudpos.payment.domain.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
 /**
  * PaymentRepository
  *
@@ -16,4 +19,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
+    Optional<Payment> findByOrder_OrderId(String  orderId);
+
 }
