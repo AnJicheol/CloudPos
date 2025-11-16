@@ -11,7 +11,7 @@ package org.example.cloudpos.product.dto;
  * @param price 상품 가격
  * @since 1.0
  */
-public record ProductSummaryDto(
+public record ProductSummaryResponse(
         String productId,
         String name,
         int price
