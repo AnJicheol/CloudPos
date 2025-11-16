@@ -1,6 +1,6 @@
 package org.example.cloudpos.inventory.listener;
 
-import org.example.cloudpos.product.dto.ProductSummaryDto;
+import org.example.cloudpos.product.dto.ProductSummaryResponse;
 
 public interface InventoryListener {
 
@@ -10,5 +10,5 @@ public interface InventoryListener {
      * @param productId Product 식별자 (ULID)
      * @return ProductSummaryDto (Inventory → Cart 전달용)
      */
-    ProductSummaryDto getProduct(String productId);
+    ProductSummaryResponse getProduct(String productId);
 }

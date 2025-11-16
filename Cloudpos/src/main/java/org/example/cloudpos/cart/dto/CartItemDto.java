@@ -3,6 +3,7 @@ package org.example.cloudpos.cart.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.cloudpos.product.dto.ProductSummaryResponse;
 
 /**
 
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
  *
  * <p><b>구성 요소</b></p>
  * <ul>
- * <li>{@code product} — 상품 요약 정보 객체 ({@link org.example.cloudpos.product.dto.ProductSummaryDto})</li>
+ * <li>{@code product} — 상품 요약 정보 객체 ({@link ProductSummaryResponse})</li>
  * <li>{@code quantity} — 해당 상품의 장바구니 내 수량</li>
  * </ul>
  *

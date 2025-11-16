@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.cart.dto.ProductSummary;
 import org.example.cloudpos.cart.exception.CartProductNotFoundException;
 import org.example.cloudpos.inventory.listener.InventoryListener;
-import org.example.cloudpos.product.dto.ProductSummaryDto;
+import org.example.cloudpos.product.dto.ProductSummaryResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 /**
@@ -29,7 +29,7 @@ public class ProductSummaryHandlerApiImpl implements ProductSummaryHandlerApi {
     @Override
     @Transactional
     public ProductSummary getProductSummary(String productId) {
-        ProductSummaryDto pv = inventoryListener.getProduct(productId);
+        ProductSummaryResponse pv = inventoryListener.getProduct(productId);
 
         if (pv == null) throw new CartProductNotFoundException(productId);
 

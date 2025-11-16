@@ -3,7 +3,7 @@ package org.example.cloudpos.product.service;
 import org.example.cloudpos.product.domain.ProductStatus;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
-import org.example.cloudpos.product.dto.ProductSummaryDto;
+import org.example.cloudpos.product.dto.ProductSummaryResponse;
 import org.example.cloudpos.product.dto.ProductUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -97,6 +97,6 @@ public interface ProductService {
      * @param productId 조회할 상품의 식별자
      * @return 상품의 요약 정보 DTO
      */
-    ProductSummaryDto findSummaryByProductId(String productId);
+    ProductSummaryResponse findSummaryByProductId(String productId);
 
 }

@@ -6,7 +6,7 @@ import org.example.cloudpos.product.domain.ProductStatus;
 import org.example.cloudpos.product.domain.Product;
 import org.example.cloudpos.product.dto.ProductCreateRequest;
 import org.example.cloudpos.product.dto.ProductResponse;
-import org.example.cloudpos.product.dto.ProductSummaryDto;
+import org.example.cloudpos.product.dto.ProductSummaryResponse;
 import org.example.cloudpos.product.dto.ProductUpdateRequest;
 import org.example.cloudpos.product.exception.ProductNotFoundException;
 import org.example.cloudpos.product.repository.ProductRepository;
@@ -185,7 +185,7 @@ public class ProductServiceImpl implements ProductService {
      *
      * <p>해당 상품이 존재하지 않을 경우 {@link ProductNotFoundException}을 발생시킵니다.</p>
      *
-     * <p>조회된 상품은 {@link ProductSummaryDto} 형태로 변환되어
+     * <p>조회된 상품은 {@link ProductSummaryResponse} 형태로 변환되어
      * 상품명과 가격 등의 요약 정보만 반환됩니다.</p>
      *
      * @param productId 조회할 상품의 식별자
@@ -194,10 +194,10 @@ public class ProductServiceImpl implements ProductService {
      * @since 1.0
      */
     @Override
-    public ProductSummaryDto findSummaryByProductId(String productId) {
+    public ProductSummaryResponse findSummaryByProductId(String productId) {
         Product p = repo.findByProductId(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
-        return new ProductSummaryDto(
+        return new ProductSummaryResponse(
                 p.getProductId(),
                 p.getName(),
                 p.getPrice()
