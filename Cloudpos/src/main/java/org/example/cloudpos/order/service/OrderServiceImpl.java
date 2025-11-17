@@ -3,11 +3,10 @@ package org.example.cloudpos.order.service;
 import com.github.f4b6a3.ulid.UlidCreator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudpos.cart.dto.CartItemDto;
 import org.example.cloudpos.order.api.CartStateHandlerApi;
 import org.example.cloudpos.order.domain.Order;
 import org.example.cloudpos.order.domain.OrderItem;
-import org.example.cloudpos.order.domain.PaymentMethod;
+import org.example.cloudpos.order.dto.CartDto;
 import org.example.cloudpos.order.dto.OrderResponse;
 import org.example.cloudpos.order.repository.OrderItemRepository;
 import org.example.cloudpos.order.repository.OrderRepository;
@@ -46,27 +45,26 @@ public class OrderServiceImpl implements OrderService{
      * @return 생성된 주문의 문자열 주문 ID를 담은 {@link OrderResponse}
      */
     @Transactional
-    public OrderResponse startPayment(String cartId, PaymentMethod paymentMethod) {
+    public OrderResponse startPayment(String cartId) {
 
         Order order = new Order(
                 UlidCreator.getUlid().toString(),
                 cartId,
-                LocalDateTime.now(),
-                paymentMethod
+                LocalDateTime.now()
         );
 
         List<OrderItem> orderItems = new ArrayList<>();
         int total = 0;
 
-        for (CartItemDto ci : cartStateHandlerApi.statePayment(cartId)) {
+        for (CartDto ci : cartStateHandlerApi.statePayment(cartId)) {
 
-            total += ci.getProduct().price() * ci.getQuantity();
+            total += ci.price() * ci.quantity();
 
             orderItems.add(new OrderItem(
                     order,
-                    ci.getProduct().productId(),
-                    ci.getQuantity(),
-                    ci.getProduct().price()
+                    ci.productId(),
+                    ci.quantity(),
+                    ci.price()
             ));
         }
 

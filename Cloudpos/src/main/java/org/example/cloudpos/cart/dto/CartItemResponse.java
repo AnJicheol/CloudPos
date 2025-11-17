@@ -30,7 +30,7 @@ import org.example.cloudpos.product.dto.ProductSummaryResponse;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CartItemDto {
+public class CartItemResponse {
     private ProductSummary product;
     private int quantity;
 

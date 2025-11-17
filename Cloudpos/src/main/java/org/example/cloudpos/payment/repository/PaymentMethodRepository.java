@@ -12,6 +12,6 @@ public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, Lo
     Optional<PaymentMethod> findByCode(String code);
 
     // 활성화된 결제수단만 조회
-    List<PaymentMethod> findByIsActiveTrue();
+    List<PaymentMethod> findByActiveTrue();
 
 }

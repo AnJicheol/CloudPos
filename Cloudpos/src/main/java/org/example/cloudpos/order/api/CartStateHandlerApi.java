@@ -1,6 +1,7 @@
 package org.example.cloudpos.order.api;
 
-import org.example.cloudpos.cart.dto.CartItemDto;
+import org.example.cloudpos.cart.dto.CartItemResponse;
+import org.example.cloudpos.order.dto.CartDto;
 
 import java.util.List;
 
@@ -41,5 +42,5 @@ public interface CartStateHandlerApi {
      * @param orderId 장바구니와 연결된 주문의 문자열 주문 ID
      * @return 체크아웃 과정에서 사용할 장바구니 상품 목록
      */
-    List<CartItemDto> statePayment(String orderId);
+    List<CartDto> statePayment(String orderId);
 }

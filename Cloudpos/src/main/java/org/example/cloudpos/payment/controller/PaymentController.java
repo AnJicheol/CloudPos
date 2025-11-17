@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 
 import org.example.cloudpos.order.domain.Order;
-import org.example.cloudpos.order.listener.OrderListener;
+import org.example.cloudpos.payment.api.OrderApi;
 import org.example.cloudpos.payment.dto.PaymentRequest;
 import org.example.cloudpos.payment.dto.PaymentResponse;
 import org.example.cloudpos.payment.service.PaymentService;
@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentController {
 
     private final PaymentService paymentService;
-    private final OrderListener orderListener;
+    private final OrderApi orderApi;
 
     /**
      * 결제 생성 API
@@ -62,7 +62,7 @@ public class PaymentController {
             @RequestBody PaymentRequest request
     ) {
         log.info("[POST] /payments called with orderId={}", request.getOrderId());
-        Order order = orderListener.getOrderById(request.getOrderId());
+        Order order = orderApi.getOrder(request.getOrderId());
         PaymentResponse response = paymentService.createPayment(order, request);
         return ResponseEntity.ok(response);
     }

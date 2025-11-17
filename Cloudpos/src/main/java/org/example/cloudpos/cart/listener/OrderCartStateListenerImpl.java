@@ -2,7 +2,7 @@ package org.example.cloudpos.cart.listener;
 
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.cart.domain.CartState;
-import org.example.cloudpos.cart.dto.CartItemDto;
+import org.example.cloudpos.cart.dto.CartItemResponse;
 import org.example.cloudpos.cart.exception.InvalidCartStateException;
 import org.example.cloudpos.cart.service.CartCheckoutService;
 import org.example.cloudpos.cart.service.CartServiceImpl;
@@ -38,7 +38,7 @@ public class OrderCartStateListenerImpl implements OrderCartStateListener {
     }
 
     @Override
-    public List<CartItemDto> onPayment(String cartId) {
+    public List<CartItemResponse> onPayment(String cartId) {
         if (cartCheckoutService.getState(cartId) != CartState.CHECKOUT_PENDING) {
             throw new InvalidCartStateException("장바구니가 결제 가능한 상태가 아닙니다.");
 

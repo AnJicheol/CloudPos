@@ -34,9 +34,8 @@ public class Payment {
     @Column(name = "payment_id", nullable = false, unique = true)
     private String paymentId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", referencedColumnName = "order_id", nullable = false)
-    private Order order;
+    @Column(name = "order_id", length = 26, nullable = false, unique = true)
+    private String orderId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_method_id")
@@ -56,9 +55,9 @@ public class Payment {
     private LocalDateTime updatedAt;
 
     @Builder
-    public Payment(String paymentId, Order order, PaymentMethod paymentMethod, PaymentStatus paymentStatus, int amountFinal) {
+    public Payment(String paymentId, String orderId, PaymentMethod paymentMethod, PaymentStatus paymentStatus, int amountFinal) {
         this.paymentId = paymentId;
-        this.order = order;
+        this.orderId = orderId;
         this.paymentMethod = paymentMethod;
         this.paymentStatus = paymentStatus;
         this.amountFinal = amountFinal;

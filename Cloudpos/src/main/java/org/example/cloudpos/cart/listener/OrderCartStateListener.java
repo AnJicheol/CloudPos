@@ -1,6 +1,6 @@
 package org.example.cloudpos.cart.listener;
 
-import org.example.cloudpos.cart.dto.CartItemDto;
+import org.example.cloudpos.cart.dto.CartItemResponse;
 
 import java.util.List;
 
@@ -20,6 +20,6 @@ public interface OrderCartStateListener {
 
     void onClose(String cartId);
 
-    List<CartItemDto> onPayment(String CartId);
+    List<CartItemResponse> onPayment(String CartId);
 
 }

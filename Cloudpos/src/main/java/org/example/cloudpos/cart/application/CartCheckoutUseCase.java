@@ -1,6 +1,6 @@
 package org.example.cloudpos.cart.application;
 
-import org.example.cloudpos.cart.dto.CartItemDto;
+import org.example.cloudpos.cart.dto.CartItemResponse;
 import org.example.cloudpos.cart.service.CartServiceImpl;
 
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.List;
 
 public interface CartCheckoutUseCase {
     /** 결제 시작: CHECKOUT_PENDING 으로 전이 */
-    List<CartItemDto> beginCheckout(String cartId);
+    List<CartItemResponse> beginCheckout(String cartId);
 
     /** 결제 성공: CLOSED 로 전이 (정책에 따라 clear 가능) */
     void paymentSuccess(String cartId);

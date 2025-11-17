@@ -17,6 +17,6 @@ import lombok.NoArgsConstructor;
 public class ProductSummary{
     String productId;
     String name;
-    long price;
+    int price;
 }
 

@@ -38,7 +38,7 @@ public class PaymentService {
     @Transactional
     public PaymentResponse createPayment(Order order, PaymentRequest request) {
         //결제 중복 방지
-        if (paymentRepository.findByOrder_OrderId(order.getOrderId()).isPresent()) {
+        if (paymentRepository.findByOrderId(order.getOrderId()).isPresent()) {
             throw new IllegalStateException("이미 결제가 생성된 주문입니다. orderId=" + order.getOrderId());
         }
         // 결제 금액 검증
@@ -52,7 +52,7 @@ public class PaymentService {
 
         Payment payment = Payment.builder()
                 .paymentId(paymentId)
-                .order(order)
+                .orderId(order.getOrderId())
                 .paymentMethod(method)
                 .paymentStatus(PaymentStatus.BEFORE_PAYMENT)
                 .amountFinal(order.getTotalAmount())
@@ -67,7 +67,7 @@ public class PaymentService {
 
     // 주문아이디로 결제조회
     public PaymentResponse getPaymentByOrderId(String orderId) {
-        Payment payment = paymentRepository.findByOrder_OrderId(orderId)
+        Payment payment = paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 주문의 결제 정보를 찾을 수 없습니다. orderId=" + orderId));
 
         return PaymentResponse.from(payment);

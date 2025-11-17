@@ -2,7 +2,7 @@ package org.example.cloudpos.cart.application;
 
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.cart.domain.CartState;
-import org.example.cloudpos.cart.dto.CartItemDto;
+import org.example.cloudpos.cart.dto.CartItemResponse;
 import org.example.cloudpos.cart.service.CartService;
 import org.example.cloudpos.cart.service.CartCheckoutService;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,7 @@ public class CartCheckoutAppService implements CartCheckoutUseCase {
     private final CartService cartService;
 
     @Override
-    public List<CartItemDto>  beginCheckout(String cartId) {
+    public List<CartItemResponse>  beginCheckout(String cartId) {
         if (cartCheckoutService.getState(cartId) != CartState.CHECKOUT_PENDING) {
             cartCheckoutService.beginCheckout(cartId);
         }

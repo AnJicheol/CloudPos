@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.cart.api.ProductSummaryHandlerApi;
 import org.example.cloudpos.cart.domain.CartState;
 import org.example.cloudpos.cart.domain.UlidGenerator;
-import org.example.cloudpos.cart.dto.CartItemDto;
+import org.example.cloudpos.cart.dto.CartItemResponse;
 import org.example.cloudpos.cart.dto.CreateCartResponse;
 import org.example.cloudpos.cart.dto.ProductSummary;
 import org.example.cloudpos.cart.exception.CartExpiredException;
@@ -176,7 +176,7 @@ public class CartServiceImpl implements CartService {
      * 장바구니의 모든 상품과 수량을 조회하여 DTO로 반환한다.
      * ProductSummaryHandlerApi를 통해 상품 정보를 조회한다.
      */
-    public List<CartItemDto> getAll(String cartId) {
+    public List<CartItemResponse> getAll(String cartId) {
         ensureAlive(cartId);
 
         //productid
@@ -185,7 +185,7 @@ public class CartServiceImpl implements CartService {
 
         List<Object> quantities = redisTemplate.opsForHash().multiGet(itemsHashKey(cartId), new ArrayList<>(ids));
 
-        List<CartItemDto> result = new ArrayList<>(ids.size());
+        List<CartItemResponse> result = new ArrayList<>(ids.size());
         for (int i = 0; i < ids.size(); i++) {
             String pid = ids.get(i);
             Object qObj= (quantities == null) ? null : quantities.get(i);
@@ -197,7 +197,7 @@ public class CartServiceImpl implements CartService {
             if (p == null) {
                 continue;
             }
-            result.add(new CartItemDto(p, qty));
+            result.add(new CartItemResponse(p, qty));
         }
         return result;
     }

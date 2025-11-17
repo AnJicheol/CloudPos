@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudpos.cart.dto.CartItemDto;
+import org.example.cloudpos.cart.dto.CartItemResponse;
 import org.example.cloudpos.cart.service.CartService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -131,11 +131,11 @@ public class CartController {
     @ApiResponse(
             responseCode = "200",
             description = "조회 성공",
-            content = @Content(schema = @Schema(implementation = CartItemDto.class))
+            content = @Content(schema = @Schema(implementation = CartItemResponse.class))
     )
     @ApiResponse(responseCode = "410", description = "만료된 장바구니")
     @GetMapping("/{cartId}")
-    public ResponseEntity<List<CartItemDto>> getCart(@PathVariable String cartId) {
+    public ResponseEntity<List<CartItemResponse>> getCart(@PathVariable String cartId) {
         return ResponseEntity.ok(cartService.getAll(cartId));
     }
 

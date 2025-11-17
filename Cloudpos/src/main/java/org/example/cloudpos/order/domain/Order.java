@@ -54,16 +54,12 @@ public class Order{
     @Column(name = "paid_at", nullable = false)
     private LocalDateTime paidAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", length = 20, nullable = false)
-    private PaymentMethod paymentMethod;
 
-    public Order(String orderId, String cartId, LocalDateTime paidAt, PaymentMethod paymentMethod) {
+    public Order(String orderId, String cartId, LocalDateTime paidAt) {
         this.orderId = orderId;
         this.cartId = cartId;
         this.totalAmount = 0;
         this.paidAt = paidAt;
-        this.paymentMethod = paymentMethod;
     }
 
     public void applyTotalAmount(int amount) {

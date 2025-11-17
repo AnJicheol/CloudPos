@@ -31,7 +31,7 @@ import java.util.Optional;
  * @author Esther
  * @since 1.0
  */
-public interface ProductRepository extends JpaRepository<Product, String> {
+public interface ProductRepository extends JpaRepository<Product, Long> {
 
     /**
      * 지정된 상태를 제외한 상품 목록을 페이지 단위로 조회합니다.

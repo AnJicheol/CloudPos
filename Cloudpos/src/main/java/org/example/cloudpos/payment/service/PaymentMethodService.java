@@ -7,7 +7,6 @@ import org.example.cloudpos.payment.repository.PaymentMethodRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.reflect.Field;
 import java.util.List;
 
 /**
@@ -76,7 +75,7 @@ public class PaymentMethodService {
 
     // 활성화된 수단만 조회
     public List<PaymentMethod> getActives() {
-        return paymentMethodRepository.findByIsActiveTrue();
+        return paymentMethodRepository.findByActiveTrue();
     }
 
     // 단건 조회

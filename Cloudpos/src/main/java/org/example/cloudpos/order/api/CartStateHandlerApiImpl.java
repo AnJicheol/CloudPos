@@ -2,7 +2,8 @@ package org.example.cloudpos.order.api;
 
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.cart.application.CartCheckoutUseCase;
-import org.example.cloudpos.cart.dto.CartItemDto;
+import org.example.cloudpos.cart.dto.CartItemResponse;
+import org.example.cloudpos.order.dto.CartDto;
 import org.example.cloudpos.order.repository.OrderRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +45,16 @@ public class CartStateHandlerApiImpl implements CartStateHandlerApi {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CartItemDto> statePayment(String orderId) {
-        return cartCheckoutUseCase.beginCheckout(orderRepository.findCartIdByOrderId(orderId));
+    public List<CartDto> statePayment(String cartId) {
+        List<CartItemResponse> cartItemResponseList = cartCheckoutUseCase.beginCheckout(cartId);
+
+        return cartItemResponseList.stream()
+                .map(item -> CartDto.builder()
+                        .productId(item.getProduct().getProductId())
+                        .price(item.getProduct().getPrice()) // long → int 캐스팅 주의
+                        .quantity(item.getQuantity())
+                        .build()
+                )
+                .toList();
     }
 }

@@ -5,8 +5,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudpos.order.domain.Order;
-import org.example.cloudpos.order.domain.PaymentMethod;
 import org.example.cloudpos.order.dto.OrderResponse;
 import org.example.cloudpos.order.service.OrderService;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +33,7 @@ public class OrderController {
             )
     )
     @PostMapping("/start-payment/{cartId}")
-    public ResponseEntity<OrderResponse> startPayment(@PathVariable String cartId, @RequestBody PaymentMethod paymentMethod) {
-        return ResponseEntity.ok(orderService.startPayment(cartId, paymentMethod));
+    public ResponseEntity<OrderResponse> startPayment(@PathVariable String cartId) {
+        return ResponseEntity.ok(orderService.startPayment(cartId));
     }
 }

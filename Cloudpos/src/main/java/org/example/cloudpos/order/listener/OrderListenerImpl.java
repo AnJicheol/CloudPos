@@ -9,8 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class OrderListenerImpl implements OrderListener{
-    private OrderService orderService;
-
+    private final OrderService orderService;
 
     @Override
     public Order getOrderById(String orderId) {

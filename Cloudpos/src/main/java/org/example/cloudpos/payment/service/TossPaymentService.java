@@ -3,7 +3,7 @@ package org.example.cloudpos.payment.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.cloudpos.order.listener.PaymentResultListener;
+import org.example.cloudpos.payment.api.PaymentOutApi;
 import org.example.cloudpos.payment.domain.Payment;
 import org.example.cloudpos.payment.domain.PaymentStatus;
 import org.example.cloudpos.payment.domain.TossPayment;
@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
@@ -47,7 +46,8 @@ public class TossPaymentService {
     private final RestTemplate restTemplate;
     private final TossPaymentRepository tossPaymentRepository;
     private final PaymentRepository paymentRepository;
-    private final PaymentResultListener paymentResultListener;
+    private final PaymentOutApi paymentOutApi;
+
 
     //토스 결제 승인 요청
     @Transactional
@@ -87,7 +87,7 @@ public class TossPaymentService {
             String orderId = body.getOrderId();
             log.info("[Order ID 조회] 외부 orderId={}", orderId);
 
-            Payment payment = paymentRepository.findByOrder_OrderId(orderId)
+            Payment payment = paymentRepository.findByOrderId(orderId)
                     .orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다. orderId=" + orderId));
 
             //  TossPayment 엔티티 생성 및 저장
@@ -107,18 +107,18 @@ public class TossPaymentService {
             log.info("[DB 저장 완료] paymentKey={}, totalAmount={}",
                     tossPayment.getPaymentKey(), tossPayment.getTotalAmount());
 
-            paymentResultListener.onPaymentSuccess(request.getOrderId());
+            paymentOutApi.onPaymentSuccess(request.getOrderId());
 
             return body;
 
         } catch (HttpClientErrorException e) {
             String msg = e.getResponseBodyAsString() != null ? e.getResponseBodyAsString() : e.getMessage();
             log.error("[TOSS 결제 승인 실패] {}", msg);
-            paymentResultListener.onPaymentFailure(request.getOrderId()); // 실패 통보
+            paymentOutApi.onPaymentFailure(request.getOrderId()); // 실패 통보
             throw new RuntimeException("Toss 결제 승인 실패: " + msg);
         } catch (Exception e) {
             log.error("[서버 내부 오류] {}", e.getMessage(), e);
-            paymentResultListener.onPaymentFailure(request.getOrderId()); // 실패 통보
+            paymentOutApi.onPaymentFailure(request.getOrderId()); // 실패 통보
             throw new RuntimeException("서버 내부 오류 발생: " + e.getMessage());
         }
     }
@@ -165,7 +165,7 @@ public class TossPaymentService {
             log.info("[DB 반영 완료] paymentKey={}, paymentStatus={}", paymentKey, payment.getPaymentStatus());
 
             // 주문 서비스에 결제 취소 통보
-            paymentResultListener.onPaymentCanceled(orderId);
+            paymentOutApi.onPaymentCanceled(orderId);
 
             return body;
 

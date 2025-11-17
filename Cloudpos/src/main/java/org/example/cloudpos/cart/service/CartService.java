@@ -1,7 +1,7 @@
 package org.example.cloudpos.cart.service;
 
 import org.example.cloudpos.cart.domain.CartState;
-import org.example.cloudpos.cart.dto.CartItemDto;
+import org.example.cloudpos.cart.dto.CartItemResponse;
 import org.example.cloudpos.cart.dto.CreateCartResponse;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public interface CartService {
 
     void clear(String cartId);
 
-    List<CartItemDto> getAll(String cartId);
+    List<CartItemResponse> getAll(String cartId);
 
     int getQuantity(String cartId, String productId);
 }
