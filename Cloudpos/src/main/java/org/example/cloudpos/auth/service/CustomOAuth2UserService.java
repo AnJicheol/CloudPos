@@ -1,8 +1,7 @@
 package org.example.cloudpos.auth.service;
 
-import lombok.RequiredArgsConstructor;
 
-import org.example.cloudpos.auth.oauth.OAuth2Provider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
@@ -11,32 +10,33 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 
 @Service
 @RequiredArgsConstructor
-public class CustomOAuth2UserService extends DefaultOAuth2UserService {
-    private final List<OAuth2Provider> oAuth2Providers;
+public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
+
+    private final List<ProviderUserHandler> handlers;
+    private final OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate =
+            new DefaultOAuth2UserService();
 
     @Override
-    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+    public OAuth2User loadUser(OAuth2UserRequest userRequest)
+            throws OAuth2AuthenticationException {
 
-        OAuth2User oAuth2User = super.loadUser(userRequest);
-        Map<String, Object> attributes = oAuth2User.getAttributes();
-
+        OAuth2User raw = delegate.loadUser(userRequest);
         String registrationId = userRequest
                 .getClientRegistration()
                 .getRegistrationId();
 
-
-        OAuth2Provider oAuth2 = oAuth2Providers.stream()
-                .filter(p -> p.provider().equals(registrationId))
+        ProviderUserHandler handler = handlers.stream()
+                .filter(h -> h.supports(registrationId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                        "지원하지 않는 OAuth2 provider: " + registrationId
-                ));
+                .orElseThrow(() ->
+                        new OAuth2AuthenticationException(
+                                "지원하지 않는 provider: " + registrationId
+                        ));
 
-        return oAuth2.process(userRequest, attributes);
+        return handler.handle(userRequest, raw.getAttributes());
     }
 }

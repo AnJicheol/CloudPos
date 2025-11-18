@@ -19,16 +19,23 @@ public class Users {
     @Column(name = "user_id", nullable = false, length = 26, unique = true)
     private String userId;
 
-    @Column(name = "name", nullable = false, length = 50)
+    @Column(name = "name", nullable = true, length = 50)
     private String name;
 
     @Column(name = "email", nullable = false, length = 255)
     private String email;
 
+    @Column(name = "provider", nullable = false, length = 20)
+    private String provider;
 
-    public Users(String userId, String name, String email) {
+    @Column(name = "provider_user_id", nullable = false, length = 100)
+    private String providerUserId;
+
+    public Users(String userId, String name, String email, String provider, String providerUserId) {
         this.userId = userId;
         this.name = name;
         this.email = email;
+        this.provider = provider;
+        this.providerUserId = providerUserId;
     }
 }
