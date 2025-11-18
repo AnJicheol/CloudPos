@@ -9,11 +9,15 @@ import org.example.cloudpos.inventory.exception.DuplicateStoreProductException;
 import org.example.cloudpos.inventory.exception.InventoryNotFoundException;
 import org.example.cloudpos.inventory.repository.InventoryRepository;
 import org.example.cloudpos.product.domain.Product;
+import org.example.cloudpos.product.dto.ProductCreateRequest;
+import org.example.cloudpos.product.dto.ProductResponse;
 import org.example.cloudpos.product.exception.ProductNotFoundException;
 import org.example.cloudpos.product.repository.ProductRepository;
+import org.example.cloudpos.product.s3.S3Uploader;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -42,9 +46,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional
 public class InventoryServiceImpl implements InventoryService {
-
     private final InventoryRepository inventoryRepo;
     private final ProductRepository productRepo;
+    private final S3Uploader s3Uploader;
 
     /**
      * 신규 매장을 생성합니다.
@@ -63,37 +67,57 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     /**
-     * 매장에 상품을 추가합니다.
+     * 매장에 신규 상품을 등록합니다.
      *
-     * <p>본사 상품(Product)을 참조하여 매장에 등록합니다.
-     * 하나의 상품은 하나의 매장에만 등록될 수 있으며,
-     * 중복 등록 시 {@link DuplicateStoreProductException}이 발생합니다.</p>
+     * <p>지정된 매장(inventoryId)에 소속된 상품을 새로 생성하고 등록합니다.
+     * 상품은 특정 매장에 종속되며, 매장을 지정하지 않고 단독으로 생성될 수 없습니다.</p>
      *
      * @param inventoryId 매장 외부 식별자 (ULID)
-     * @param productId 등록할 상품의 ID
-     * @throws ProductNotFoundException 지정한 상품이 존재하지 않을 경우
-     * @throws InventoryNotFoundException 지정한 매장이 존재하지 않을 경우
-     * @throws DuplicateStoreProductException 동일 상품이 이미 등록된 경우
+     * @param req         상품 생성 요청 정보 (상품명, 가격, 상태, 이미지 등)
+     * @return 생성된 매장 상품 정보
      */
-    @Override
     @Transactional
-    public void addProduct(String inventoryId, String productId) {
-        // 상품 존재 확인
-        Product product = productRepo.findByProductId(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
-
-        // 매장 존재 확인
+    public ProductResponse addProduct(String inventoryId, ProductCreateRequest req, MultipartFile image) {
         Inventory inventory = inventoryRepo.findFirstByInventoryId(inventoryId)
                 .orElseThrow(() -> new InventoryNotFoundException(inventoryId));
 
-        // 매장 이름 스냅샷 복제 후 저장
-        Inventory newRow = new Inventory(inventoryId, inventory.getName(), product);
+        // 2. 상품 엔티티 생성
+        Product product = new Product();
+        product.setProductId(UlidCreator.getUlid().toString());
+        product.setName(req.name());
+        product.setPrice(req.price());
+
+        // 2-1. 이미지 파일이 있으면 S3 업로드
+        if (image != null && !image.isEmpty()) {
+            String imageUrl = s3Uploader.upload(image, "products");
+            product.setImageUrl(imageUrl);
+        } else {
+
+            product.setImageUrl(req.imageUrl());
+        }
+
+        productRepo.save(product);
+
+        // 3. 매장-상품 매핑(Inventory row 추가)
         try {
+            Inventory newRow = new Inventory(
+                    inventoryId,
+                    inventory.getName(),
+                    product
+            );
             inventoryRepo.save(newRow);
         } catch (DataIntegrityViolationException e) {
-            // UNIQUE 제약 위반 시 도메인 예외로 변환
-            throw new DuplicateStoreProductException(inventoryId, productId, e);
+            // 매장+상품 조합 중복 등
+            throw new DuplicateStoreProductException(inventoryId, product.getProductId(), e);
         }
+
+        // 4. 응답 DTO 생성
+        return new ProductResponse(
+                product.getProductId(),
+                product.getName(),
+                product.getPrice(),
+                product.getImageUrl()
+        );
     }
 
     /**

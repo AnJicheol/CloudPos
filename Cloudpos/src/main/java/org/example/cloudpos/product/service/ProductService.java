@@ -7,6 +7,7 @@ import org.example.cloudpos.product.dto.ProductSummaryResponse;
 import org.example.cloudpos.product.dto.ProductUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 상품 도메인의 비즈니스 로직을 정의하는 서비스 인터페이스입니다.
@@ -78,7 +79,7 @@ public interface ProductService {
      * @param req 수정할 상품 정보가 담긴 요청 DTO
      * @throws org.example.cloudpos.product.exception.ProductNotFoundException 수정 대상이 존재하지 않을 경우
      */
-    void update(String productId, ProductUpdateRequest req);
+    public void update(String productId, ProductUpdateRequest req, MultipartFile image);
 
     /**
      * 상품명을 기준으로 상품을 검색합니다.
@@ -98,13 +99,5 @@ public interface ProductService {
      * @return 상품의 요약 정보 DTO
      */
     ProductSummaryResponse findSummaryByProductId(String productId);
-
-    /**
-     * 상품의 대표 이미지 URL을 조회합니다.
-     *
-     * @param id 상품 ID
-     * @return 이미지 URL 또는 null
-     */
-    String getProductImageUrl(Long id);
 
 }

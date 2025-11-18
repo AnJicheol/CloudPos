@@ -10,10 +10,12 @@ import org.example.cloudpos.product.dto.ProductSummaryResponse;
 import org.example.cloudpos.product.dto.ProductUpdateRequest;
 import org.example.cloudpos.product.exception.ProductNotFoundException;
 import org.example.cloudpos.product.repository.ProductRepository;
+import org.example.cloudpos.product.s3.S3Uploader;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * {@link ProductService} 구현체로,
@@ -41,7 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional
 public class ProductServiceImpl implements ProductService {
-
+    private final S3Uploader s3Uploader;
     private final ProductRepository repo;
 
     /**
@@ -61,7 +63,7 @@ public class ProductServiceImpl implements ProductService {
         p.setProductId(UlidCreator.getUlid().toString());
         p.setName(req.name());
         p.setPrice(req.price());
-        p.setStatus(req.status() != null ? req.status() : ProductStatus.ACTIVE);
+        p.setStatus(ProductStatus.ACTIVE);
         p.setImageUrl(req.imageUrl());
 
         return repo.save(p).getProductId();
@@ -78,7 +80,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponse get(String productId) {
         Product p = repo.findByProductId(productId).orElseThrow(() -> new ProductNotFoundException(productId));
-        return new ProductResponse(p.getId(), p.getProductId(), p.getName(), p.getPrice(), p.getStatus(),p.getImageUrl());
+        return new ProductResponse(p.getProductId(), p.getName(), p.getPrice(), p.getImageUrl());
     }
 
     /**
@@ -112,7 +114,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Page<ProductResponse> list(Pageable pageable) {
         return repo.findByStatusNot(ProductStatus.ARCHIVED, pageable)
-                .map(p -> new ProductResponse(p.getId(), p.getProductId(), p.getName(), p.getPrice(), p.getStatus(),p.getImageUrl()));
+                .map(p -> new ProductResponse(p.getProductId(), p.getName(), p.getPrice(), p.getImageUrl()));
     }
 
     /**
@@ -129,8 +131,10 @@ public class ProductServiceImpl implements ProductService {
      * @throws ProductNotFoundException 수정 대상 상품이 존재하지 않을 경우
      */
     @Override
-    public void update(String productId, ProductUpdateRequest req) {
-        Product p = repo.findByProductId(productId).orElseThrow(() -> new ProductNotFoundException(productId));
+    @Transactional
+    public void update(String productId, ProductUpdateRequest req, MultipartFile image) {
+        Product p = repo.findByProductId(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
 
         if (req.name() != null) {
             p.setName(req.name());
@@ -141,9 +145,24 @@ public class ProductServiceImpl implements ProductService {
         if (req.status() != null) {
             p.setStatus(req.status());
         }
-        if (req.imageUrl() != null) {
-            p.setImageUrl(req.imageUrl());
+
+        // 이미지 교체 로직
+        if (image != null && !image.isEmpty()) {
+            String oldImageUrl = p.getImageUrl();
+
+            String newImageUrl = s3Uploader.upload(image, "products");
+            p.setImageUrl(newImageUrl);
+
+            if (oldImageUrl != null && !oldImageUrl.isBlank()) {
+                try {
+                    s3Uploader.delete(oldImageUrl);
+                } catch (Exception e) {
+                    //log.warn("기존 S3 이미지 삭제 실패 - url: {}", oldImageUrl, e);
+                }
+            }
         }
+
+        // JPA Dirty Checking으로 flush
     }
 
     /**
@@ -169,11 +188,9 @@ public class ProductServiceImpl implements ProductService {
                         keyword, ProductStatus.ARCHIVED, pageable)
                 .map(p ->
                         new ProductResponse(
-                                p.getId(),
                                 p.getProductId(),
                                 p.getName(),
                                 p.getPrice(),
-                                p.getStatus(),
                                 p.getImageUrl()
                         )
                 );
@@ -204,26 +221,5 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
-    /**
-     * 상품의 대표 이미지 URL을 조회합니다.
-     *
-     * <p>해당 상품이 존재하지 않을 경우 {@link ProductNotFoundException}이 발생하며,
-     * 조회된 상품의 {@code imageUrl} 필드를 그대로 반환합니다.</p>
-     *
-     * <p>이미지가 등록되지 않은 상품일 경우 {@code null}을 반환합니다.
-     * 이 메서드는 이미지 교체 또는 삭제 기능에서 기존 이미지 경로 확인 용도로 사용됩니다.</p>
-     *
-     * @param id 조회할 상품의 DB 기본 키
-     * @return 상품의 대표 이미지 URL (또는 null)
-     * @throws ProductNotFoundException 조회 대상 상품이 존재하지 않을 경우
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public String getProductImageUrl(Long id) {
-        Product p = repo.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(id));
-
-        return p.getImageUrl();
-    }
 
 }

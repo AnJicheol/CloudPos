@@ -12,21 +12,17 @@ import org.example.cloudpos.product.domain.Product;
  * <p>엔티티 {@link Product}와 1:1로 매핑되지만,
  * API 계약을 보장하기 위해 엔티티를 직접 노출하지 않고 DTO로 응답합니다.</p>
  *
- * @param id        DB 기본 키 (자동 증가)
  * @param productId 비즈니스용 상품 코드 (외부 식별자)
  * @param name      상품명
  * @param price     가격(원 단위)
- * @param status    현재 상품 상태 (ACTIVE, INACTIVE, ARCHIVED 등)
  * @param imageUrl  대표 이미지 URL (없을 수 있음)
  *
  * @author Esther
  * @since 1.0
  */
 public record ProductResponse(
-        Long id,
         String productId,
         String name,
         int price,
-        ProductStatus status,
         String imageUrl
 ) {}

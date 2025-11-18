@@ -19,7 +19,6 @@ import org.example.cloudpos.product.domain.ProductStatus;
  *
  * @param name 상품명 (필수, 공백 불가)
  * @param price 가격(원 단위, 0 이상)
- * @param status 상품 상태 (옵션, null이면 ACTIVE)
  * @param imageUrl 대표 이미지 URL (선택)
  * @author Esther
  * @since 1.0
@@ -27,6 +26,5 @@ import org.example.cloudpos.product.domain.ProductStatus;
 public record ProductCreateRequest(
         @NotBlank String name,
         @Min(0) int price,
-        ProductStatus status,
         String imageUrl
 ) {}

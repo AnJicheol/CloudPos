@@ -28,7 +28,7 @@ public class PaymentMethod {
 
 
     @Column(name = "is_active", nullable = false)
-    private boolean Active = true;
+    private boolean active = true;
 
 
     @Column(name = "created_at")
@@ -45,7 +45,7 @@ public class PaymentMethod {
         return PaymentMethod.builder()
                 .code(normalizeCode(code))
                 .name(name.trim())
-                .Active(true)
+                .active(true)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -54,12 +54,12 @@ public class PaymentMethod {
 
     //비즈니스 메서드
     public void deactivate() {
-        this.Active = false;
+        this.active = false;
         this.updatedAt = LocalDateTime.now();
     }
 
     public void activate() {
-        this.Active = true;
+        this.active = true;
         this.updatedAt = LocalDateTime.now();
     }
 

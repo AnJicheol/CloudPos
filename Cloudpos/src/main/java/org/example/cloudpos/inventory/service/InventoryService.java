@@ -2,6 +2,9 @@ package org.example.cloudpos.inventory.service;
 
 import org.example.cloudpos.inventory.dto.InventoryCreateRequest;
 import org.example.cloudpos.inventory.dto.InventoryProductResponse;
+import org.example.cloudpos.product.dto.ProductCreateRequest;
+import org.example.cloudpos.product.dto.ProductResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -30,15 +33,16 @@ public interface InventoryService {
     String create(InventoryCreateRequest req);
 
     /**
-     * 매장에 상품을 추가합니다.
+     * 매장에 신규 상품을 등록합니다.
      *
-     * <p>본사 상품(Product)을 참조하여 매장에 등록하며,
-     * 하나의 상품은 하나의 매장에만 등록될 수 있습니다.</p>
+     * <p>지정된 매장(inventoryId)에 소속된 상품을 새로 생성하고 등록합니다.
+     * 상품은 특정 매장에 종속되며, 매장을 지정하지 않고 단독으로 생성될 수 없습니다.</p>
      *
      * @param inventoryId 매장 외부 식별자 (ULID)
-     * @param productId   등록할 상품의 식별자
+     * @param req         상품 생성 요청 정보 (상품명, 가격, 상태, 이미지 등)
+     * @return 생성된 매장 상품 정보
      */
-    void addProduct(String inventoryId, String productId);
+    ProductResponse addProduct(String inventoryId, ProductCreateRequest req, MultipartFile image);
 
     /**
      * 특정 매장에 등록된 상품 목록을 조회합니다.
