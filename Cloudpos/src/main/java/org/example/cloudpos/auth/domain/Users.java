@@ -19,10 +19,10 @@ public class Users {
     @Column(name = "user_id", nullable = false, length = 26, unique = true)
     private String userId;
 
-    @Column(name = "name", nullable = true, length = 50)
+    @Column(name = "name", length = 50)
     private String name;
 
-    @Column(name = "email", nullable = false, length = 255)
+    @Column(name = "email")
     private String email;
 
     @Column(name = "provider", nullable = false, length = 20)

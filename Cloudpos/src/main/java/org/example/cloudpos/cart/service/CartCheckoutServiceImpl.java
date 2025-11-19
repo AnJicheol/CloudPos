@@ -22,7 +22,7 @@ public class CartCheckoutServiceImpl implements CartCheckoutService{
 
 
     private final RedisTemplate<String, String> redisTemplate;
-    private static final Duration TTL=Duration.ofMinutes(5);
+    private static final Duration TTL=Duration.ofMinutes(60);
 
     /**
      * 장바구니의 현재 상태를 조회한다.

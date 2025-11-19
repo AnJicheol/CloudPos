@@ -4,6 +4,7 @@ import com.github.f4b6a3.ulid.UlidCreator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudpos.order.api.CartStateHandlerApi;
+import org.example.cloudpos.order.api.DiscountApi;
 import org.example.cloudpos.order.domain.Order;
 import org.example.cloudpos.order.domain.OrderItem;
 import org.example.cloudpos.order.dto.CartDto;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Map;
 
 
 /**
@@ -30,6 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService{
     private final CartStateHandlerApi cartStateHandlerApi;
+    private final DiscountApi discountApi;
     private final OrderItemRepository orderItemRepository;
     private final OrderRepository orderRepository;
 
@@ -56,9 +58,12 @@ public class OrderServiceImpl implements OrderService{
         List<OrderItem> orderItems = new ArrayList<>();
         int total = 0;
 
-        for (CartDto ci : cartStateHandlerApi.statePayment(cartId)) {
+        List<CartDto> cartDtoList = cartStateHandlerApi.statePayment(cartId);
+        Map<String, Integer> discountMap = discountApi.getDiscountMap(cartDtoList);
 
-            total += ci.price() * ci.quantity();
+        for (CartDto ci : cartDtoList) {
+
+            total += ci.price() * ci.quantity() - discountMap.getOrDefault(ci.productId(), 0);
 
             orderItems.add(new OrderItem(
                     order,
