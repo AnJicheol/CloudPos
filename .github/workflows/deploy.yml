@@ -2,12 +2,12 @@ name: Build and Push to ECR and Deploy
 
 on:
   push:
-    branches: [ "main" ]          # main 브랜치 푸시 시 자동 실행
-  workflow_dispatch:               # Actions 탭에서 수동 실행도 가능
+    branches: [ "main" ]         
+  workflow_dispatch:              
 
 permissions:
-  id-token: write                  # OIDC로 AWS 역할 Assume에 필요
-  contents: read                   # 레포 코드를 읽기 위해 필요
+  id-token: write                 
+  contents: read                 
 
 jobs:
   build-and-deploy:
@@ -17,7 +17,7 @@ jobs:
       AWS_REGION: ap-northeast-2
       ECR_REGISTRY: 961341550745.dkr.ecr.ap-northeast-2.amazonaws.com
       ECR_REPOSITORY: cloud_pos
-      IMAGE_TAG: latest            # 나중에 git SHA 등으로 바꾸고 싶으면 여기 수정
+      IMAGE_TAG: latest          
 
     steps:
       - name: Checkout
@@ -26,7 +26,7 @@ jobs:
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}   # 예: arn:aws:iam::961341550745:role/Cloudpos-git
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -47,7 +47,7 @@ jobs:
 
       - name: Deploy to EC2 via SSM
         env:
-          INSTANCE_ID: ${{ secrets.CLOUDPOS_INSTANCE_ID }}   # EC2 인스턴스 ID (i-xxxxxxxxxxxx)
+          INSTANCE_ID: ${{ secrets.CLOUDPOS_INSTANCE_ID }}  
         run: |
           echo "[INFO] Trigger deploy.sh on EC2 via SSM"
 
