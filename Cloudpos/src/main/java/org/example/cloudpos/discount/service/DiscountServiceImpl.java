@@ -38,6 +38,13 @@ public class DiscountServiceImpl implements DiscountService {
     }
 
 
+    @Transactional(readOnly = true)
+    public List<Discount> getDiscountList(List<String> productIdList){
+        LocalDateTime now = LocalDateTime.now();
+
+        return discountRepository.findActiveDiscountsByProductIds(productIdList, now);
+    }
+
     public String createDiscount(DiscountCreateIdRequest req){
         String ulid = UlidCreator.getUlid().toString();
         Discount discount = new Discount(

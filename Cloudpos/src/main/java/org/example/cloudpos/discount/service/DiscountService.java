@@ -1,5 +1,6 @@
 package org.example.cloudpos.discount.service;
 
+import org.example.cloudpos.discount.domain.Discount;
 import org.example.cloudpos.discount.dto.owner.create.DiscountCreateIdRequest;
 import org.example.cloudpos.discount.dto.kiosk.DiscountKioskResponse;
 import org.example.cloudpos.discount.dto.kiosk.select.DiscountSelectResponse;
@@ -21,4 +22,5 @@ public interface DiscountService {
     void discountUpdate(String discountId, DiscountUpdateRequest req);
 
     void discountDelete(DiscountDeleteRequest req);
+    List<Discount> getDiscountList(List<String> productIdList);
 }

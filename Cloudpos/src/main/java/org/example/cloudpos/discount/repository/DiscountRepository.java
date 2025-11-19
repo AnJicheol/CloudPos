@@ -72,6 +72,18 @@ public interface DiscountRepository extends JpaRepository<Discount, String> {
              @Param("inventoryId") String inventoryId
             );
 
+
+    @Query("""
+        SELECT d
+        FROM Discount d
+        WHERE d.productId IN :productIds
+          AND :now BETWEEN d.discountStart AND d.discountEnd
+        """)
+    List<Discount> findActiveDiscountsByProductIds(
+            @Param("productIds") List<String> productIds,
+            @Param("now") LocalDateTime now
+    );
+
 }
 
 
