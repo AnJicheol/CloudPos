@@ -1,0 +1,43 @@
+name: Build and Push to ECR
+
+on:
+  push:
+    branches: [ "main" ]      
+  workflow_dispatch:           
+
+permissions:
+  id-token: write              
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::961341550745:role/github-actions-ecr-role  
+          aws-region: ap-northeast-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to ECR
+        env:
+          ECR_REGISTRY: 961341550745.dkr.ecr.ap-northeast-2.amazonaws.com
+          ECR_REPOSITORY: cloud_pos
+          IMAGE_TAG: latest          # 나중에 git SHA / 버전으로 바꿔도 됨
+        run: |
+          echo "[INFO] Build docker image"
+          docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+
+          echo "[INFO] Tag image"
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+          echo "[INFO] Push to ECR"
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
