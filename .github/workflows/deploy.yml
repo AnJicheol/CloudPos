@@ -34,6 +34,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, tag, and push image to ECR
+        working-directory: ./Cloudpos
         run: |
           echo "[INFO] Build docker image"
           docker build -t ${ECR_REPOSITORY}:${IMAGE_TAG} .
