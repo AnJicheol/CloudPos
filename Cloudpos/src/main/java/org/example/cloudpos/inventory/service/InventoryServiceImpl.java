@@ -1,0 +1,164 @@
+package org.example.cloudpos.inventory.service;
+
+import com.github.f4b6a3.ulid.UlidCreator;
+import lombok.RequiredArgsConstructor;
+import org.example.cloudpos.inventory.domain.Inventory;
+import org.example.cloudpos.inventory.dto.InventoryCreateRequest;
+import org.example.cloudpos.inventory.dto.InventoryProductResponse;
+import org.example.cloudpos.inventory.exception.DuplicateStoreProductException;
+import org.example.cloudpos.inventory.exception.InventoryNotFoundException;
+import org.example.cloudpos.inventory.repository.InventoryRepository;
+import org.example.cloudpos.product.domain.Product;
+import org.example.cloudpos.product.dto.ProductCreateRequest;
+import org.example.cloudpos.product.dto.ProductResponse;
+import org.example.cloudpos.product.exception.ProductNotFoundException;
+import org.example.cloudpos.product.repository.ProductRepository;
+import org.example.cloudpos.product.s3.S3Uploader;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+/**
+ * 인벤토리(매장) 관련 비즈니스 로직을 처리하는 서비스 클래스.
+ *
+ * <p>매장(Inventory)과 본사 상품(Product) 간의 매핑 관계를 관리합니다.</p>
+ *
+ * <h2>도메인 관계</h2>
+ * <ul>
+ *   <li>하나의 매장(Inventory)은 여러 상품을 가질 수 있습니다.</li>
+ *   <li>하나의 상품(Product)은 오직 하나의 매장에만 등록될 수 있습니다.</li>
+ * </ul>
+ *
+ * <h2>트랜잭션 정책</h2>
+ * <ul>
+ *   <li>클래스 전체에 {@link Transactional}이 적용되어 기본적으로 트랜잭션 내에서 수행됩니다.</li>
+ *   <li>조회 메서드는 {@code readOnly = true}로 설정하여 읽기 전용 트랜잭션을 사용합니다.</li>
+ * </ul>
+ *
+ * @see org.example.cloudpos.inventory.repository.InventoryRepository
+ * @see org.example.cloudpos.product.repository.ProductRepository
+ * @since 1.0
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class InventoryServiceImpl implements InventoryService {
+    private final InventoryRepository inventoryRepo;
+    private final ProductRepository productRepo;
+    private final S3Uploader s3Uploader;
+
+    /**
+     * 신규 매장을 생성합니다.
+     *
+     * <p>매장은 ULID를 외부 식별자로 사용하며, 생성 시 상품은 포함되지 않습니다.</p>
+     *
+     * @param req 매장 생성 요청 DTO
+     * @return 생성된 매장의 ULID
+     */
+    @Override
+    public String create(InventoryCreateRequest req) {
+        String ulid = UlidCreator.getUlid().toString();
+        Inventory inventory = new Inventory(ulid, req.name(), null);
+        inventoryRepo.save(inventory);
+        return ulid;
+    }
+
+    /**
+     * 매장에 신규 상품을 등록합니다.
+     *
+     * <p>지정된 매장(inventoryId)에 소속된 상품을 새로 생성하고 등록합니다.
+     * 상품은 특정 매장에 종속되며, 매장을 지정하지 않고 단독으로 생성될 수 없습니다.</p>
+     *
+     * @param inventoryId 매장 외부 식별자 (ULID)
+     * @param req         상품 생성 요청 정보 (상품명, 가격, 상태, 이미지 등)
+     * @return 생성된 매장 상품 정보
+     */
+    @Transactional
+    public ProductResponse addProduct(String inventoryId, ProductCreateRequest req, MultipartFile image) {
+        Inventory inventory = inventoryRepo.findFirstByInventoryId(inventoryId)
+                .orElseThrow(() -> new InventoryNotFoundException(inventoryId));
+
+        // 2. 상품 엔티티 생성
+        Product product = new Product();
+        product.setProductId(UlidCreator.getUlid().toString());
+        product.setName(req.name());
+        product.setPrice(req.price());
+
+        // 2-1. 이미지 파일이 있으면 S3 업로드
+        if (image != null && !image.isEmpty()) {
+            String imageUrl = s3Uploader.upload(image, "products");
+            product.setImageUrl(imageUrl);
+        } else {
+
+            product.setImageUrl(req.imageUrl());
+        }
+
+        productRepo.save(product);
+
+        // 3. 매장-상품 매핑(Inventory row 추가)
+        try {
+            Inventory newRow = new Inventory(
+                    inventoryId,
+                    inventory.getName(),
+                    product
+            );
+            inventoryRepo.save(newRow);
+        } catch (DataIntegrityViolationException e) {
+            // 매장+상품 조합 중복 등
+            throw new DuplicateStoreProductException(inventoryId, product.getProductId(), e);
+        }
+
+        // 4. 응답 DTO 생성
+        return new ProductResponse(
+                product.getProductId(),
+                product.getName(),
+                product.getPrice(),
+                product.getImageUrl()
+        );
+    }
+
+    /**
+     * 특정 매장에 등록된 상품 목록을 조회합니다.
+     *
+     * <p>매장이 존재하지 않으면 예외를 던지며,
+     * 조회 시 N+1 문제를 방지하기 위해 {@code fetch join}을 사용합니다.</p>
+     *
+     * @param inventoryId 매장 외부 식별자 (ULID)
+     * @return 매장 내 상품 정보를 담은 DTO 목록
+     * @throws IllegalArgumentException 지정한 매장이 존재하지 않을 경우
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<InventoryProductResponse> listProducts(String inventoryId) {
+        // 매장 존재 검증
+        if (!inventoryRepo.existsByInventoryId(inventoryId)) {
+            throw new IllegalArgumentException("해당 매장이 존재하지 않습니다.");
+        }
+        // N+1 방지용 fetch join
+        return inventoryRepo.findAllWithProductByInventoryId(inventoryId).stream()
+                .map(inv -> InventoryProductResponse.from(inv.getProduct()))
+                .toList();
+    }
+
+    /**
+     * 매장에서 특정 상품을 제거합니다.
+     *
+     * <p>매장-상품 매핑 테이블에서 해당 상품을 삭제하며,
+     * 매장이나 상품 엔티티 자체에는 영향을 주지 않습니다.</p>
+     *
+     * @param inventoryId 매장 외부 식별자 (ULID)
+     * @param productId 상품 기본키 ID
+     * @throws IllegalArgumentException 매장이 존재하지 않거나 해당 상품이 매장에 없을 경우
+     */
+    @Override
+    @Transactional
+    public void removeProduct(String inventoryId, String productId) {
+        long deleted = inventoryRepo.deleteByInventoryIdAndProduct_ProductId(inventoryId, productId);
+        if (deleted == 0) {
+            throw new IllegalArgumentException("해당 매장에서 해당 상품을 찾을 수 없습니다.");
+        }
+    }
+}

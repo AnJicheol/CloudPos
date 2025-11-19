@@ -1,0 +1,3 @@
+[submodule "Cloudpos/compose"]
+	path = Cloudpos/compose
+	url = https://github.com/AnJicheol/CloudPosCompose.git
