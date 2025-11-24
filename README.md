@@ -1,21 +1,64 @@
 # CloudPos
 
-## ⚙️프로세스
 
-1. 이슈 생성 → 백로그(Backlog) 배치
+## 개요
 
-2. 이슈 담당자 지정 후 In progress로 이동
+CloudPos 는 웹 환경에서 간편하게 포스기와 키오스크 기능을 제공합니다.
+기존 느리고 복잡한 UX를 개선하고 간편하게 매장 내 상품을 관리할 수 있습니다.
+<br>
+<img width="1455" height="864" alt="화면" src="https://github.com/user-attachments/assets/25966fa6-961a-40e5-8927-b8584ba912d9" />
 
-3. 로컬에서 dev 최신 받기
 
-4. dev에서 feature 브랜치 생성
+<br><br>
 
-5. 기능 개발 후 dev 대상으로 PR 생성
+## Team
 
-6. 코드 리뷰 → 통과 시 dev에 머지
+| 이름 | 역할 | 주요 담당 |  
+| --- | --- | --- | 
+| 안지철 | BE, 인프라 설계, 팀 리더 | 권한·인증, 주문 프로세스 개발 |  
+| 김유정 | BE, QA | 장바구니, 주문 프로세스 개발, QA |  
+| 김에스더 | BE, 자료 정리 | 상품 도메인 시스템 개발, 발표 PPT 제작 |  
+| 안희건 | BE, 인프라 관리 | 재고, 상품 등록 프로세스 개발, 인프라 관리 |  
+| 신수호 | BE, 발표 | 쿠폰·할인·결제 시스템 개발, 발표 |  
 
-7. 기능들이 dev에 일정량 모이면 release 브랜치 생성
+<br><br>
 
+## Tech Stack
+
+- Backend: Spring Boot, Java 21, Spring Data JPA, Redis
+- DB: MySQL
+- Infra: AWS EC2, RDS, S3
+- Auth: OAuth2 (Kakao), Session 기반 인증
+
+<br><br>
+
+
+## 아키텍처 & ERD
+
+<img width="736" height="850" alt="Seed drawio" src="https://github.com/user-attachments/assets/a8fdb7ee-d417-4622-8db7-a2152c01c3fd" />
+
+<br><br>
+
+<img width="1578" height="775" alt="cloudpos_erd" src="https://github.com/user-attachments/assets/9b4bdbe7-b5e6-4744-b1f7-043656357885" />
+
+<br><br>
+
+
+
+
+## 작동 원리
+CloudPos는 Modulith 구조를 따릅니다.
+* 숙련도를 고려해 패키지 구조만 Modulith 구조를 따릅니다.
+* 실제 모듈 분리 시 피해를 격리하기 위해 api, listener 계층을 구현하였습니다.
+* api 계층에선 다른 모듈을 호출하며 응답 모듈은 listener 계층을 통해 응답합니다. 두 계층에서 다른 모듈을 의존 주입 받으며 서비스에 안정성을 책임집니다.
+* product와 inventory 모듈은 api, listener 계층을 사용하지 않습니다. 해당 모듈은 도메인 성격상 분리하지 않는 것이 이득이라는 판단 때문입니다.
+  
+Inventory 모듈을 통해 product를 생성 수정등 관리합니다.
+모든 결제 내역은 일차적으로 Order 모듈에서 명세를 작성합니다.
+* 할인 등 최종 금액이 계산되며 OrderId를 리턴합니다. 이는 이중 계산을 피하고 Payment 모듈에서 내부적으로 값을 요청함으로 안정성을 확보하기 위함입니다.
+* Order는 경제 성공 이후 이벤트 전파를 담당합니다.
+  
+키오스크는 Cart에서 Redis와 유한상태 머신을 통해 관리합니다.
 
 <br><br>
 
@@ -23,129 +66,74 @@
 
 ```text
 com.yourapp.pos
-  ├─ auth              // 인증/권한, 카카오 로그인, 점주-포스기 1:N 연동
+  ├─ auth              // 인증/권한, 카카오 로그인, 점주-포스기 1:N 연동     //안지철
   │  ├─ domain
-  │  └─ application
-  ├─ order             // 주문 프로세스, 결제신청→완료신호→장바구니 비우기
+  │  └─ mvc
+  ├─ order             // 주문 프로세스, 결제신청→완료신호→장바구니 비우기   //안지철
   │  ├─ domain
-  │  └─ application
-  ├─ cart              // 장바구니 생성/추가/수량/삭제/결제시 비우기
+  │  ├─ api
+  │  ├─ listener
+  │  └─ mvc
+  ├─ cart              // 장바구니 생성/추가/수량/삭제/결제시 비우기         //김유정
   │  ├─ domain
-  │  └─ application
-  ├─ product           // 상품: id, 이름, 가격, 상태 / 생성·조회·수정
+  │  ├─ api
+  │  ├─ listener
+  │  └─ mvc
+  ├─ product           // 상품: id, 이름, 가격, 상태 / 생성·조회·수정        //김에스더
   │  ├─ domain
-  │  └─ application
-  ├─ inventory         // 재고/상품 관리: 등록, 품절, 수동추천
+  │  └─ mvc
+  ├─ inventory         // 재고/상품 관리: 등록, 품절, 수동추천               //김에스더
   │  ├─ domain
-  │  └─ application
-  ├─ payment           // 결제/할인 인터페이스, 현금/카드, 외부 모듈 어댑터
+  │  ├─ listener
+  │  └─ mvc
+  ├─ payment           // 결제 인터페이스, 현금/카드, 외부 모듈 어댑터        //신수호
   │  ├─ domain
-  │  └─ application
+  │  ├─ api
+  │  └─ mvc
+  ├─ discount           // 할인 CRUD                                         //안희건
+  │  ├─ domain
+  │  ├─ listener
+  │  └─ mvc
   └─ common            // 공통 예외, 공통 dto, 유틸
 ```
 
 <br><br>
 
-## 📏 네이밍 규칙
+##  핵심 API 
+[API PDF](docs/api.pdf)  
 
-| 대상 | 적용 범위 | 규칙 |
-| --- | --- | --- |
-| 파일/클래스 | `class`, `interface`, `enum`, 스프링 컴포넌트 | **UpperCamelCase** *(= PascalCase, 파스칼)* |
-| 메서드 | 모든 메서드/핸들러 | **lowerCamelCase** *(로워 카멜)* |
-| 변수 | 필드/지역/파라미터 | **lowerCamelCase** |
-| 상수 | `static final` | **UPPER_SNAKE_CASE** *(대문자 스네이크)* |
-| 패키지 | 패키지 경로 | **모두 소문자 + 점(.)** |
-| 엔티티 필드 | JPA 엔티티 속성 | **lowerCamelCase** |
-| DB 테이블/컬럼 | 스키마/마이그레이션 | **snake_case** *(스네이크)* |
-| 엔티티↔DB 매핑 | `@Table`, `@Column` | 엔티티=c**amel**, DB=**snake** |
+<br><br>
+## 1) 매장/상품/할인 세팅
+
+| 목적 | Method | Endpoint | 설명 |
+| --- | --- | --- | --- |
+| 매장 생성 | `POST` | `/api/inventories` | 매장 신규 생성, `inventoryId` 발급 |
+| 매장 진열 목록 | `GET` | `/api/inventories/{inventoryId}/products` | 해당 매장 상품 리스트 |
+| 매장에 상품 등록(이미지) | `POST` | `/api/inventories/{inventoryId}/products` | `multipart`(data JSON + image) |
+| 매장 진열 해제 | `DELETE` | `/api/inventories/{inventoryId}/products/{productId}` | 매장-상품 매핑만 해제 |
+| 할인 생성 | `POST` | `/api/discounts/owner/create` | 매장·상품 단위 할인 등록 |
 
 <br><br>
 
-## 🌀 Git Flow 전략
+## 2) 장바구니 → 주문
 
-| 브랜치명 | 용도 | 비고 |
-|---------|------|------|
-| `master` | 실제 배포 브랜치 | 운영용, 코드 리뷰 후 병합 |
-| `dev` | 개발 통합 브랜치 | 모든 feature 브랜치가 여기로 병합 |
-| `feature/*` | 기능 개발 | `ex) feature/AUTH-SCRUM-20` 형식 |
-| `fix/*` | 버그 수정 | |
-| `hotfix/*` | 긴급 수정 | |
-| `release/*` | 배포 준비 | 테스트 완료 후 master로 병합 |
-
-
-브랜치명 + 이슈 번호 + 이슈 제목
-ex) feat/#123-add-cart-item-api
-
+| 목적 | Method | Endpoint | 설명 |
+| --- | --- | --- | --- |
+| 장바구니 생성 | `POST` | `/api/carts` | 새 장바구니 발급 |
+| 장바구니 조회 | `GET` | `/api/carts/{cartId}` | 아이템/금액 확인 |
+| 아이템 추가 | `POST` | `/api/carts/{cartId}/items` | `{ productId, qty }` |
+| 주문 생성 & 결제 시작 | `POST` | `/api/orders/start-payment/{cartId}` | `cartId` 기반 `CHECKOUT` 진입 |
 
 <br><br>
 
-## 💬 커밋 컨벤션
+## 3) 결제 (내부 결제 + Toss)
 
-| 태그 | 설명 |
-|------|------|
-| `feat:` | 새로운 기능 추가 |
-| `fix:` | 버그 수정 |
-| `refactor:` | 리팩토링 (기능 변경 없음) |
-| `docs:` | 문서 변경 |
-| `style:` | 코드 스타일/포맷 변경 |
-| `test:` | 테스트 코드 관련 |
-| `chore:` | 설정, 빌드, 패키지 등 기타 변경 |
+| 목적 | Method | Endpoint | 설명 |
+| --- | --- | --- | --- |
+| 활성 결제수단 | `GET` | `/payments/methods/active` | 노출 가능 결제수단만 |
+| Payment 생성 | `POST` | `/payments` | `{ orderId, paymentMethodId }` |
+| 주문별 최신 Payment | `GET` | `/payments/{orderId}` | 최근 결제 상태 조회 |
+| Toss 승인 | `POST` | `/payments/toss/confirm` | `{ paymentKey, orderId, amount }` |
+| Toss 취소 | `POST` | `/payments/toss/cancel/{paymentKey}` | `orderId`, `cancelReason` |
 
 <br><br>
-
-
-## 🛠 개발 규칙 (CloudPosProject)
-
-```md
-1. 단위 테스트 필수
-2. 문서화(Javadoc) 필수
-  * 공개 메서드(public)와 도메인 엔티티에는 Javadoc 작성
-  * 비즈니스 규칙이 있는 메서드는 동작/파라미터/예외 명시
-3. API 명세는 Swagger로 관리
-  * 컨트롤러 추가 시 Swagger에서 확인 가능한 상태로 PR
-4. 환경 설정 분리
-  * 레포에는 공용 application.yml 수정시 리뷰 필수
-  * 개인 개발용은 application-{name}.yml 또는 .env 만들어서 사용 (커밋 금지)
-5. YML에 민감정보 직접 기입 금지 (AWS로 별도 관리)
-6. env 파일 커밋 금지
-```
-
-
-
-## 📦 API 응답 포맷
-
-✅ 성공 응답:
-```json
-{
-  "success": true,
-  "status": 200,
-  "data": {
-    // 실제 DTO 값
-  }
-}
-```
-❌ 실패 응답:
-
-```json
-{
-  "success": false,
-  "status": 400,
-  "data": null
-}
-```
-
-<br>
-
-## 🚦 HTTP 상태코드 통일
-
-| 코드 | 의미                   | 사용 예                                |
-|------|------------------------|----------------------------------------|
-| 200  | OK                     | 일반 요청 성공 (GET, POST 요청 등)    |
-| 201  | Created                | 자원 생성 완료 (POST 성공 시)         |
-| 204  | No Content             | 응답 없음 (DELETE 요청 등)            |
-| 400  | Bad Request            | 클라이언트 요청 오류 (유효성 실패 등) |
-| 401  | Unauthorized           | 인증 실패 (로그인 필요)               |
-| 403  | Forbidden              | 권한 없음 (비인가 요청)               |
-| 404  | Not Found              | 리소스 없음 (잘못된 ID 등)           |
-| 409  | Conflict               | 중복 충돌 (이메일 중복 등)            |
-| 500  | Internal Server Error  | 서버 내부 에러 (처리 불가능한 예외)   |
