@@ -100,7 +100,7 @@ com.yourapp.pos
 <br><br>
 
 ##  핵심 API 
-[API PDF](docs/api.pdf)  
+[API PDF](docs/CloudPos_APi.pdf)  
 
 <br><br>
 ## 1) 매장/상품/할인 세팅
